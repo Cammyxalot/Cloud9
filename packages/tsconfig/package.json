@@ -1,0 +1,22 @@
+{
+  "name": "@cloud9/tsconfig",
+  "version": "0.0.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cammyxalot/cloud9.git"
+  },
+  "license": "MIT",
+  "files": [
+    "base.json"
+  ],
+  "bugs": {
+    "url": "https://github.com/cammyxalot/cloud9/issues"
+  },
+  "homepage": "https://github.com/cammyxalot/cloud9/tree/main/packages/tsconfig#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@tsconfig/recommended": "^1.0.2"
+  }
+}

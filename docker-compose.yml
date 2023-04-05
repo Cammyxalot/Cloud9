@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  db:
+    image: mariadb:10.5
+    restart: always
+    env_file:
+      - .env
+    environment:
+      - MYSQL_ROOT_PASSWORD=$DB_ROOT_PASSWORD
+      - MYSQL_DATABASE=$DB_NAME
+    ports:
+      - $DB_LOCAL_PORT:$DB_DOCKER_PORT
+    volumes:
+      - db:/var/lib/mysql
+    networks:
+      - server
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: $MODE
+    privileged: true
+    restart: always
+    env_file:
+      - .env
+    environment:
+      - MYSQLDB_HOST=$DB_HOST
+      - MYSQLDB_PORT=$DB_DOCKER_PORT
+      - MYSQLDB_DATABASE=$DB_NAME
+      - MYSQLDB_USER=root
+      - MYSQLDB_PASSWORD=$DB_ROOT_PASSWORD
+    ports:
+      - $CLIENT_APP_LOCAL_PORT:5173
+      - $SERVER_APP_LOCAL_PORT:2022
+    volumes:
+      - .:/app
+      - /app/node_modules
+    networks:
+      - server
+    depends_on:
+      - db
+
+volumes:
+  db:
+
+networks:
+  server:
+    driver: bridge
