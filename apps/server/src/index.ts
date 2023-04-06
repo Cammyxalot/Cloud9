@@ -11,14 +11,19 @@ const publicProcedure = t.procedure
 
 export const appRouter = router({
   userCreate: publicProcedure
-    .input(z.object({
-      name: z.string().regex(/^[a-z][-a-z0-9_]*\$?$/),
-      password: z.string(),
-      sshKey: z.string()
-    }))
+    .input(
+      z.object({
+        name: z.string().regex(/^[a-z][-a-z0-9_]*\$?$/),
+        password: z.string(),
+        sshKey: z.string()
+      })
+    )
     .mutation(async (req) => {
-      runScript('create_user', [req.input.name, req.input.password, req.input.sshKey])
-
+      runScript('create_user', [
+        req.input.name,
+        req.input.password,
+        req.input.sshKey
+      ])
       const result = await db
         .insertInto('user')
         .values({
