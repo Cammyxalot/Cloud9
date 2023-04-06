@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import './App.css'
 // import { ApiProvider, api } from './api'
 import { api } from './api'
@@ -26,6 +26,10 @@ function App (): JSX.Element {
     })
     setToken(token)
   }, [name, password, setToken])
+
+  useEffect(() => {
+    void api.userStorage.query('baptiste').then(console.log)
+  }, [])
 
   return (
     <div className="App">

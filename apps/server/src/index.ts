@@ -1,8 +1,9 @@
 import { TRPCError, initTRPC } from '@trpc/server'
-import { z } from 'zod'
-import { runScript } from './utils'
-import { db } from './database'
 import argon2 from 'argon2'
+import { z } from 'zod'
+import { db } from './database'
+import { cronBackup } from './crons/backup'
+import { runScript } from './utils'
 import { type Context } from './context'
 import jwt from 'jsonwebtoken'
 
@@ -30,14 +31,19 @@ const publicProcedure = t.procedure
 
 export const appRouter = router({
   userCreate: publicProcedure
-    .input(z.object({
-      name: z.string().regex(/^[a-z][-a-z0-9_]*\$?$/),
-      password: z.string(),
-      sshKey: z.string()
-    }))
+    .input(
+      z.object({
+        name: z.string().regex(/^[a-z][-a-z0-9_]*\$?$/),
+        password: z.string(),
+        sshKey: z.string()
+      })
+    )
     .mutation(async (req) => {
-      runScript('create_user', [req.input.name, req.input.password, req.input.sshKey])
-
+      runScript('create_user', [
+        req.input.name,
+        req.input.password,
+        req.input.sshKey
+      ])
       const result = await db
         .insertInto('user')
         .values({
@@ -71,7 +77,22 @@ export const appRouter = router({
       return {
         token: jwt.sign({ id: user.id }, JWT_SECRET)
       }
+    }),
+  userStorage: publicProcedure
+    .input(z.string().regex(/^[a-z][-a-z0-9_]*\$?$/))
+    .query(async ({ input }) => {
+      const used = runScript('get_user_storage_used', [input])
+      const available = runScript('get_user_storage_available', [input])
+
+      return {
+        storage: {
+          used: parseInt(used),
+          available: parseInt(available)
+        }
+      }
     })
 })
 
 export type AppRouter = typeof appRouter
+
+cronBackup.run()
