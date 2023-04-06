@@ -34,7 +34,7 @@ services:
       - $CLIENT_APP_LOCAL_PORT:5173
       - $SERVER_APP_LOCAL_PORT:2022
     volumes:
-      - .:/app
+      # - .:/app
       - /app/node_modules
     networks:
       - server
