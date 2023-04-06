@@ -33,6 +33,8 @@ services:
     ports:
       - $CLIENT_APP_LOCAL_PORT:5173
       - $SERVER_APP_LOCAL_PORT:2022
+      - 80:80
+      - 443:443
     volumes:
       # - .:/app
       - ./apps/client/src:/app/apps/client/src

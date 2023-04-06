@@ -74,6 +74,7 @@ importers:
       '@trpc/server': ^10.18.0
       '@types/cors': ^2.8.13
       '@types/jsonwebtoken': ^9.0.1
+      '@types/mime': ^3.0.1
       '@types/node': ^18.11.9
       '@types/node-cron': ^3.0.7
       '@types/ws': ^8.5.4
@@ -82,6 +83,7 @@ importers:
       jsonwebtoken: ^9.0.0
       kysely: ^0.24.2
       kysely-codegen: ^0.10.0
+      mime: ^3.0.0
       mysql2: ^3.2.0
       node-cron: ^3.0.2
       nodemon: ^2.0.22
@@ -95,6 +97,7 @@ importers:
       cors: 2.8.5
       jsonwebtoken: 9.0.0
       kysely: 0.24.2
+      mime: 3.0.0
       mysql2: 3.2.0
       node-cron: 3.0.2
       ws: 8.13.0
@@ -104,6 +107,7 @@ importers:
       '@cloud9/tsconfig': link:../../packages/tsconfig
       '@types/cors': 2.8.13
       '@types/jsonwebtoken': 9.0.1
+      '@types/mime': 3.0.1
       '@types/node': 18.15.11
       '@types/node-cron': 3.0.7
       kysely-codegen: 0.10.0_kysely@0.24.2+mysql2@3.2.0
@@ -932,6 +936,10 @@ packages:
     resolution: {integrity: sha512-c5ltxazpWabia/4UzhIoaDcIza4KViOQhdbjRlfcIGVnsE3c3brkz9Z+F/EeJIECOQP7W7US2hNE930cWWkPiw==}
     dependencies:
       '@types/node': 18.15.11
+    dev: true
+
+  /@types/mime/3.0.1:
+    resolution: {integrity: sha512-Y4XFY5VJAuw0FgAqPNd6NNoV44jbq9Bz2L7Rh/J6jLTiHBSBJa9fxqQIvkIld4GsoDOcCbvzOUAbLPsSKKg+uA==}
     dev: true
 
   /@types/node-cron/3.0.7:
@@ -2675,6 +2683,12 @@ packages:
     dependencies:
       braces: 3.0.2
       picomatch: 2.3.1
+
+  /mime/3.0.0:
+    resolution: {integrity: sha512-jSCU7/VB1loIWBZe14aEYHU/+1UMEHoaO7qxCOVJOw9GgH72VAWppxNcjU+x9a2k3GSIBXNKxXQFqRvvZ7vr3A==}
+    engines: {node: '>=10.0.0'}
+    hasBin: true
+    dev: false
 
   /minimatch/3.1.2:
     resolution: {integrity: sha512-J7p63hRiAjw1NDEww1W7i37+ByIrOWO5XQQAzZ3VOcL0PNybwpfmV/N05zFAzwQ9USyEcX6t3UO+K5aqBQOIHw==}
