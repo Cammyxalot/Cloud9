@@ -1,9 +1,9 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import './App.css'
 // import { ApiProvider, api } from './api'
 import { api } from './api'
 
-function App (): JSX.Element {
+function App(): JSX.Element {
   // const userCreateMutation = api.userCreate.useMutation()
 
   const [name, setName] = useState('')
@@ -14,16 +14,38 @@ function App (): JSX.Element {
     await api.userCreate.mutate({
       name,
       password,
-      sshKey
+      sshKey,
     })
   }, [name, password, sshKey])
+
+  useEffect(() => {
+    api.userStorage.query('baptiste').then(console.log)
+  }, [])
 
   return (
     <div className="App">
       {/* <ApiProvider> */}
-      <input type="text" value={name} onChange={e => { setName(e.target.value) }} />
-      <input type="password" value={password} onChange={e => { setPassword(e.target.value) }} />
-      <input type="text" value={sshKey} onChange={e => { setSshKey(e.target.value) }} />
+      <input
+        type="text"
+        value={name}
+        onChange={e => {
+          setName(e.target.value)
+        }}
+      />
+      <input
+        type="password"
+        value={password}
+        onChange={e => {
+          setPassword(e.target.value)
+        }}
+      />
+      <input
+        type="text"
+        value={sshKey}
+        onChange={e => {
+          setSshKey(e.target.value)
+        }}
+      />
       <button
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         onClick={createUser}

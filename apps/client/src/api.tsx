@@ -1,6 +1,6 @@
 // import { createTRPCReact, httpBatchLink } from '@trpc/react-query'
-import { createTRPCProxyClient, httpBatchLink } from '@trpc/react-query'
 import type { AppRouter } from '@cloud9/server'
+import { createTRPCProxyClient, httpBatchLink } from '@trpc/react-query'
 // import { QueryClient } from '@tanstack/react-query'
 
 // const queryClient = new QueryClient()
@@ -23,7 +23,7 @@ import type { AppRouter } from '@cloud9/server'
 export const api = createTRPCProxyClient<AppRouter>({
   links: [
     httpBatchLink({
-      url: process.env.API_URL
-    })
-  ]
+      url: process.env.API_URL,
+    }),
+  ],
 })

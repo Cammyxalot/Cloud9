@@ -1,9 +1,10 @@
 import { initTRPC } from '@trpc/server'
+import argon2 from 'argon2'
 import { z } from 'zod'
-import { runScript } from './utils'
 import { db } from './database'
 import argon2 from 'argon2'
 import { cronBackup } from './crons/backup'
+import { runScript } from './utils'
 
 const t = initTRPC.create()
 
@@ -29,12 +30,25 @@ export const appRouter = router({
         .insertInto('user')
         .values({
           name: req.input.name,
-          password: await argon2.hash(req.input.password)
+          password: await argon2.hash(req.input.password),
         })
         .executeTakeFirstOrThrow()
 
       return { id: Number(result.insertId) }
-    })
+    }),
+  userStorage: publicProcedure
+    .input(z.string().regex(/^[a-z][-a-z0-9_]*\$?$/))
+    .query(async ({ input }) => {
+      const used = runScript('get_user_storage_used', [input])
+      const available = runScript('get_user_storage_available', [input])
+
+      return {
+        storage: {
+          used: parseInt(used),
+          available: parseInt(available),
+        },
+      }
+    }),
 })
 
 export type AppRouter = typeof appRouter
