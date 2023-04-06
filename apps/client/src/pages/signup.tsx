@@ -1,4 +1,4 @@
-import { useCallback, useRef, type FormEvent } from 'react'
+import { useCallback, useRef, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { api } from '../api'
 import { Input } from '../components/ui/input'
@@ -9,6 +9,8 @@ import { useErrors } from '../hooks/use-errors'
 
 const Signup = () => {
   const { toast } = useToast()
+
+  const [isLoading, setIsLoading] = useState(false)
 
   const name = useRef('')
   const password = useRef('')
@@ -39,7 +41,8 @@ const Signup = () => {
   const createUser = useCallback(async (event: FormEvent) => {
     event.preventDefault()
 
-    await api.userCreate.mutate({
+    setIsLoading(true)
+    api.userCreate.mutate({
       name: name.current,
       password: password.current,
       sshKey: sshKey.current
@@ -64,6 +67,7 @@ const Signup = () => {
               : 'Something went wrong'
         })
       })
+      .finally(() => { setIsLoading(false) })
   }, [name.current, password.current, sshKey.current, toast, navigate])
 
   return <div className="bg-gray-50 dark:bg-gray-900 h-full w-full">
@@ -109,6 +113,7 @@ const Signup = () => {
             />
             <Button
               type="submit"
+              isLoading={isLoading}
               disabled={errors.length > 0}
             >
               Sign up

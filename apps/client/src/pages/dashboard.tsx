@@ -24,6 +24,7 @@ export const Dashboard = () => {
   })
   const [sshKey, setSshKey] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const [isAddingWebsite, setIsAddingWebsite] = useState(false)
 
   const newWebsiteDomain = useRef('')
   const newWebsiteAccessPath = useRef('')
@@ -85,10 +86,12 @@ export const Dashboard = () => {
 
     const { domain, accessPath } = { domain: newWebsiteDomain.current, accessPath: newWebsiteAccessPath.current }
     if (domain !== undefined && accessPath !== undefined) {
-      setWebsites([...websites, { domain, accessPath }])
+      setIsAddingWebsite(true)
 
       await api.addWebsite.mutate({ domain, accessPath })
+      setWebsites([...websites, { domain, accessPath }])
 
+      setIsAddingWebsite(false)
       newWebsiteDomain.current = ''
       newWebsiteAccessPath.current = ''
     }
@@ -222,6 +225,7 @@ export const Dashboard = () => {
                   type="submit"
                   disabled={newWebsiteErrors.length > 0 || newWebsiteDomain.current.length === 0 || newWebsiteAccessPath.current.length === 0}
                   className='w-full'
+                  isLoading={isAddingWebsite}
                 >
                   Add website
                 </Button>
