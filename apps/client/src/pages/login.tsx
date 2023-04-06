@@ -1,4 +1,4 @@
-import { useRef, useCallback, type FormEvent } from 'react'
+import { useRef, useCallback, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Input } from '../components/ui/input'
 import { Button } from '../components/ui/button'
@@ -8,6 +8,8 @@ import { useErrors } from '../hooks/use-errors'
 
 const Login = () => {
   const { toast } = useToast()
+
+  const [isLoading, setIsLoading] = useState(false)
 
   const name = useRef('')
   const password = useRef('')
@@ -22,12 +24,15 @@ const Login = () => {
   const loginUser = useCallback(async (event: FormEvent) => {
     event.preventDefault()
 
+    setIsLoading(true)
     api.userLogin.query({
       name: name.current,
       password: password.current
     })
       .then((response) => {
         localStorage.setItem('token', response.token)
+        localStorage.setItem('password', password.current)
+        localStorage.setItem('name', name.current)
         navigate('/')
       })
       .catch((error: Error) => {
@@ -42,6 +47,7 @@ const Login = () => {
                 : 'Something went wrong'
         })
       })
+      .finally(() => { setIsLoading(false) })
   }, [name.current, password.current, navigate, toast])
 
   return <div className="bg-gray-50 dark:bg-gray-900 h-full w-full">
@@ -76,6 +82,7 @@ const Login = () => {
           />
           <Button
             type="submit"
+            isLoading={isLoading}
             disabled={errors.length > 0}
           >
             Log in
