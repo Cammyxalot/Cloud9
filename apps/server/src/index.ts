@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { runScript } from './utils'
 import { db } from './database'
 import argon2 from 'argon2'
+import { cronBackup } from './crons/backup'
 
 const t = initTRPC.create()
 
@@ -37,3 +38,5 @@ export const appRouter = router({
 })
 
 export type AppRouter = typeof appRouter
+
+cronBackup.run()

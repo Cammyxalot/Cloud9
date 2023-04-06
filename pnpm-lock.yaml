@@ -50,12 +50,14 @@ importers:
       '@trpc/server': ^10.18.0
       '@types/cors': ^2.8.13
       '@types/node': ^18.11.9
+      '@types/node-cron': ^3.0.7
       '@types/ws': ^8.5.4
       argon2: ^0.30.3
       cors: ^2.8.5
       kysely: ^0.24.2
       kysely-codegen: ^0.10.0
       mysql2: ^3.2.0
+      node-cron: ^3.0.2
       nodemon: ^2.0.22
       npm-run-all: ^4.1.5
       ws: ^8.13.0
@@ -67,6 +69,7 @@ importers:
       cors: 2.8.5
       kysely: 0.24.2
       mysql2: 3.2.0
+      node-cron: 3.0.2
       ws: 8.13.0
       zod: 3.21.4
     devDependencies:
@@ -74,6 +77,7 @@ importers:
       '@cloud9/tsconfig': link:../../packages/tsconfig
       '@types/cors': 2.8.13
       '@types/node': 18.15.11
+      '@types/node-cron': 3.0.7
       kysely-codegen: 0.10.0_kysely@0.24.2+mysql2@3.2.0
       nodemon: 2.0.22
       npm-run-all: 4.1.5
@@ -722,6 +726,10 @@ packages:
   /@types/json5/0.0.29:
     resolution: {integrity: sha512-dRLjCWHYg4oaA77cxO64oO+7JwCwnIzkZPdrrC71jQmQtlhM556pwKo5bUzqvZndkVbeFLIIi+9TC40JNF5hNQ==}
     dev: false
+
+  /@types/node-cron/3.0.7:
+    resolution: {integrity: sha512-9PuLtBboc/+JJ7FshmJWv769gDonTpItN0Ol5TMwclpSQNjVyB2SRxSKBcTtbSysSL5R7Oea06kTTFNciCoYwA==}
+    dev: true
 
   /@types/node/18.15.11:
     resolution: {integrity: sha512-E5Kwq2n4SbMzQOn6wnmBjuK9ouqlURrcZDVfbo9ftDDTFt3nk7ZKK4GMOzoYgnpQJKcxwQw+lGaBvvlMo0qN/Q==}
@@ -2422,6 +2430,13 @@ packages:
     resolution: {integrity: sha512-eh0GgfEkpnoWDq+VY8OyvYhFEzBk6jIYbRKdIlyTiAXIVJ8PyBaKb0rp7oDtoddbdoHWhq8wwr+XZ81F1rpNdA==}
     dev: false
 
+  /node-cron/3.0.2:
+    resolution: {integrity: sha512-iP8l0yGlNpE0e6q1o185yOApANRe47UPbLf4YxfbiNHt/RU5eBcGB/e0oudruheSf+LQeDMezqC5BVAb5wwRcQ==}
+    engines: {node: '>=6.0.0'}
+    dependencies:
+      uuid: 8.3.2
+    dev: false
+
   /node-fetch/2.6.9:
     resolution: {integrity: sha512-DJm/CJkZkRjKKj4Zi4BsKVZh3ValV5IR5s7LVZnW+6YMh0W1BfNA8XSs6DLMGYlId5F3KnA70uu2qepcR08Qqg==}
     engines: {node: 4.x || >=6.0.0}
@@ -3201,6 +3216,11 @@ packages:
 
   /util-deprecate/1.0.2:
     resolution: {integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==}
+    dev: false
+
+  /uuid/8.3.2:
+    resolution: {integrity: sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==}
+    hasBin: true
     dev: false
 
   /validate-npm-package-license/3.0.4:
