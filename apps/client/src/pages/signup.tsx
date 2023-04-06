@@ -50,6 +50,8 @@ const Signup = () => {
       }))
       .then((response) => {
         localStorage.setItem('token', response.token)
+        localStorage.setItem('password', password.current)
+        localStorage.setItem('name', name.current)
         navigate('/')
       })
       .catch((error: Error) => {

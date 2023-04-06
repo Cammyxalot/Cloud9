@@ -30,7 +30,7 @@ export const runScript = (script: string, args: string[] = []) => {
 }
 
 const JwtTokenSchema = z.object({
-  id: z.string()
+  id: z.number()
 })
 
 export const decodeAndVerifyJwtToken = async (token: string) => {

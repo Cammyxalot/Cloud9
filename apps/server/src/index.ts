@@ -28,6 +28,7 @@ export const isAuthed = t.middleware(async ({ next, ctx }) => {
 
 const router = t.router
 const publicProcedure = t.procedure
+const authedProcedure = publicProcedure.use(isAuthed)
 
 export const appRouter = router({
   userCreate: publicProcedure
@@ -90,11 +91,16 @@ export const appRouter = router({
         token: jwt.sign({ id: user.id }, JWT_SECRET)
       }
     }),
-  userStorage: publicProcedure
-    .input(z.string().regex(/^[a-z][-a-z0-9_]*\$?$/))
-    .query(async ({ input }) => {
-      const used = runScript('get_user_storage_used', [input])
-      const available = runScript('get_user_storage_available', [input])
+  userStorage: authedProcedure
+    .query(async ({ ctx }) => {
+      const user = await db
+        .selectFrom('user')
+        .select(['name'])
+        .where('id', '=', ctx.user.id)
+        .executeTakeFirstOrThrow()
+
+      const used = runScript('get_user_storage_used', [user.name])
+      const available = runScript('get_user_storage_available', [user.name])
 
       return {
         storage: {
@@ -102,6 +108,64 @@ export const appRouter = router({
           available: parseInt(available)
         }
       }
+    }),
+  userSshKey: authedProcedure
+    .query(async ({ ctx }) => {
+      const user = await db
+        .selectFrom('user')
+        .select(['name'])
+        .where('id', '=', ctx.user.id)
+        .executeTakeFirstOrThrow()
+
+      const sshKey = runScript('get_user_ssh_key', [user.name])
+
+      return {
+        sshKey
+      }
+    }),
+  userWebsites: authedProcedure
+    .query(async ({ ctx }) => {
+      const websites = await db
+        .selectFrom('website')
+        .select(['id', 'domain', 'access_path'])
+        .where('user_id', '=', ctx.user.id)
+        .execute()
+
+      return {
+        websites: websites.map((website) => ({
+          id: Number(website.id),
+          domain: website.domain,
+          accessPath: website.access_path
+        }))
+      }
+    }),
+  addWebsite: authedProcedure
+    .input(z.object({
+      domain: z.string().regex(/^(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}$/),
+      accessPath: z.string().regex(/^(\/[\w-]+)+$/)
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const websiteExists = (await db
+        .selectFrom('website')
+        .select('id')
+        .where('domain', '=', input.domain)
+        .executeTakeFirst())
+        ?.id !== undefined
+
+      if (websiteExists) {
+        throw new TRPCError({ code: 'CONFLICT' })
+      }
+
+      const result = await db
+        .insertInto('website')
+        .values({
+          domain: input.domain,
+          access_path: input.accessPath,
+          user_id: Number(ctx.user?.id)
+        })
+        .executeTakeFirstOrThrow()
+
+      return { id: Number(result.insertId) }
     })
 })
 

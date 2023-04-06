@@ -10,6 +10,14 @@ export interface User {
   password: string
 }
 
+export interface Website {
+  id: Generated<number>
+  domain: string
+  access_path: string
+  user_id: number
+}
+
 export interface DB {
   user: User
+  website: Website
 }

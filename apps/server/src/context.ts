@@ -17,7 +17,7 @@ export const createContext = async (
     }
     return null
   }
-  const user = await getUserFromHeader()
+  const user = await getUserFromHeader().catch(() => null)
 
   return {
     user
