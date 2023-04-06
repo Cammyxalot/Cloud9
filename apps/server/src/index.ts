@@ -2,6 +2,7 @@ import { initTRPC } from '@trpc/server'
 import argon2 from 'argon2'
 import { z } from 'zod'
 import { db } from './database'
+import { cronBackup } from './crons/backup'
 import { runScript } from './utils'
 
 const t = initTRPC.create()
@@ -15,21 +16,20 @@ export const appRouter = router({
       z.object({
         name: z.string().regex(/^[a-z][-a-z0-9_]*\$?$/),
         password: z.string(),
-        sshKey: z.string(),
-      }),
+        sshKey: z.string()
+      })
     )
-    .mutation(async req => {
+    .mutation(async (req) => {
       runScript('create_user', [
         req.input.name,
         req.input.password,
-        req.input.sshKey,
+        req.input.sshKey
       ])
-
       const result = await db
         .insertInto('user')
         .values({
           name: req.input.name,
-          password: await argon2.hash(req.input.password),
+          password: await argon2.hash(req.input.password)
         })
         .executeTakeFirstOrThrow()
 
@@ -44,10 +44,12 @@ export const appRouter = router({
       return {
         storage: {
           used: parseInt(used),
-          available: parseInt(available),
-        },
+          available: parseInt(available)
+        }
       }
-    }),
+    })
 })
 
 export type AppRouter = typeof appRouter
+
+cronBackup.run()

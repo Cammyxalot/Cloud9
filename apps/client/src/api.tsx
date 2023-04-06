@@ -23,7 +23,7 @@ import { createTRPCProxyClient, httpBatchLink } from '@trpc/react-query'
 export const api = createTRPCProxyClient<AppRouter>({
   links: [
     httpBatchLink({
-      url: process.env.API_URL,
-    }),
-  ],
+      url: process.env.API_URL
+    })
+  ]
 })

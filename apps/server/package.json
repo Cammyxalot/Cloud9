@@ -20,6 +20,7 @@
     "cors": "^2.8.5",
     "kysely": "^0.24.2",
     "mysql2": "^3.2.0",
+    "node-cron": "^3.0.2",
     "ws": "^8.13.0",
     "zod": "^3.21.4"
   },
@@ -28,6 +29,7 @@
     "@cloud9/tsconfig": "workspace:*",
     "@types/cors": "^2.8.13",
     "@types/node": "^18.11.9",
+    "@types/node-cron": "^3.0.7",
     "kysely-codegen": "^0.10.0",
     "nodemon": "^2.0.22",
     "npm-run-all": "^4.1.5"

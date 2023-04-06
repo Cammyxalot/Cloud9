@@ -3,7 +3,7 @@ import './App.css'
 // import { ApiProvider, api } from './api'
 import { api } from './api'
 
-function App(): JSX.Element {
+function App (): JSX.Element {
   // const userCreateMutation = api.userCreate.useMutation()
 
   const [name, setName] = useState('')
@@ -14,12 +14,12 @@ function App(): JSX.Element {
     await api.userCreate.mutate({
       name,
       password,
-      sshKey,
+      sshKey
     })
   }, [name, password, sshKey])
 
   useEffect(() => {
-    api.userStorage.query('baptiste').then(console.log)
+    void api.userStorage.query('baptiste').then(console.log)
   }, [])
 
   return (
