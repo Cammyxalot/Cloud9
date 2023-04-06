@@ -6,21 +6,29 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "dev": "run-p dev:*",
+    "dev": "run-s db:migrate && run-p dev:*",
     "dev:build": "tsc --watch",
     "dev:server": "nodemon --watch dist --exec node dist/server.js",
+    "db:migrate": "tsc && node dist/database/migrate.js",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"
   },
   "dependencies": {
     "@trpc/server": "^10.18.0",
     "@types/ws": "^8.5.4",
-    "ws": "^8.13.0"
+    "argon2": "^0.30.3",
+    "cors": "^2.8.5",
+    "kysely": "^0.24.2",
+    "mysql2": "^3.2.0",
+    "ws": "^8.13.0",
+    "zod": "^3.21.4"
   },
   "devDependencies": {
     "@cloud9/eslint-config": "workspace:*",
     "@cloud9/tsconfig": "workspace:*",
+    "@types/cors": "^2.8.13",
     "@types/node": "^18.11.9",
+    "kysely-codegen": "^0.10.0",
     "nodemon": "^2.0.22",
     "npm-run-all": "^4.1.5"
   }
