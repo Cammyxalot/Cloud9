@@ -3,5 +3,8 @@ module.exports = {
   parserOptions: {
     project: './tsconfig.json'
   },
-  ignorePatterns: ['vite.config.ts', '**/dist/**/*', '**/node_modules/**/*']
+  ignorePatterns: ['vite.config.ts', '**/dist/**/*', '**/node_modules/**/*'],
+  rules: {
+    '@typescript-eslint/no-misused-promises': 'off'
+  }
 }
