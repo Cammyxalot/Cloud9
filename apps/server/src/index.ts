@@ -39,11 +39,23 @@ export const appRouter = router({
       })
     )
     .mutation(async (req) => {
+      const userExists = (await db
+        .selectFrom('user')
+        .select('id')
+        .where('name', '=', req.input.name)
+        .executeTakeFirst())
+        ?.id !== undefined
+
+      if (userExists) {
+        throw new TRPCError({ code: 'CONFLICT' })
+      }
+
       runScript('create_user', [
         req.input.name,
         req.input.password,
         req.input.sshKey
       ])
+
       const result = await db
         .insertInto('user')
         .values({

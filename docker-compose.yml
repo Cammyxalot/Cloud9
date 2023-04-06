@@ -35,6 +35,7 @@ services:
       - $SERVER_APP_LOCAL_PORT:2022
     volumes:
       # - .:/app
+      - ./apps/client/src:/app/apps/client/src
       - /app/node_modules
     networks:
       - server
