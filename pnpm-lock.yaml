@@ -23,12 +23,14 @@ importers:
       '@radix-ui/react-toggle': ^1.0.2
       '@trpc/client': ^10.18.0
       '@tsconfig/vite-react': ^1.0.1
+      '@types/humanize-duration': ^3.27.1
       '@types/react': ^18.0.28
       '@types/react-dom': ^18.0.11
       '@vitejs/plugin-react': ^3.1.0
       autoprefixer: ^10.4.14
       class-variance-authority: ^0.5.1
       clsx: ^1.2.1
+      humanize-duration: ^3.28.0
       lucide-react: ^0.130.1
       postcss: ^8.4.21
       pretty-bytes: ^6.1.0
@@ -48,6 +50,7 @@ importers:
       '@trpc/client': 10.18.0_@trpc+server@10.18.0
       class-variance-authority: 0.5.1
       clsx: 1.2.1
+      humanize-duration: 3.28.0
       lucide-react: 0.130.1_react@18.2.0
       pretty-bytes: 6.1.0
       react: 18.2.0
@@ -59,6 +62,7 @@ importers:
     devDependencies:
       '@cloud9/eslint-config': link:../../packages/eslint-config
       '@tsconfig/vite-react': 1.0.1
+      '@types/humanize-duration': 3.27.1
       '@types/react': 18.0.33
       '@types/react-dom': 18.0.11
       '@vitejs/plugin-react': 3.1.0_vite@4.2.1
@@ -922,6 +926,10 @@ packages:
     resolution: {integrity: sha512-RG8AStHlUiV5ysZQKq97copd2UmVYw3/pRMLefISZ3S1hK104Cwm7iLQ3fTKx+lsUH2CE8FlLaYeEA2LSeqYUA==}
     dependencies:
       '@types/node': 18.15.11
+    dev: true
+
+  /@types/humanize-duration/3.27.1:
+    resolution: {integrity: sha512-K3e+NZlpCKd6Bd/EIdqjFJRFHbrq5TzPPLwREk5Iv/YoIjQrs6ljdAUCo+Lb2xFlGNOjGSE0dqsVD19cZL137w==}
     dev: true
 
   /@types/json-schema/7.0.11:
@@ -2288,6 +2296,10 @@ packages:
       debug: 4.3.4
     transitivePeerDependencies:
       - supports-color
+    dev: false
+
+  /humanize-duration/3.28.0:
+    resolution: {integrity: sha512-jMAxraOOmHuPbffLVDKkEKi/NeG8dMqP8lGRd6Tbf7JgAeG33jjgPWDbXXU7ypCI0o+oNKJFgbSB9FKVdWNI2A==}
     dev: false
 
   /husky/8.0.3:

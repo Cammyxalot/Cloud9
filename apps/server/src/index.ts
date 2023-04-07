@@ -172,6 +172,44 @@ export const appRouter = router({
         .executeTakeFirstOrThrow()
 
       return { id: Number(result.insertId) }
+    }),
+  userBackups: authedProcedure
+    .query(async ({ ctx }) => {
+      const user = await db
+        .selectFrom('user')
+        .select(['name'])
+        .where('id', '=', ctx.user.id)
+        .executeTakeFirstOrThrow()
+
+      const backups = runScript('get_user_backups', [user.name]).trim()
+
+      return {
+        backups: backups.split('\n').flatMap((backupTimestamp) => {
+          if (backupTimestamp === '' || Number(backupTimestamp) === 0) {
+            return []
+          }
+
+          return [{
+            timestamp: Number(backupTimestamp)
+          }]
+        })
+      }
+    }),
+  restoreBackup: authedProcedure
+    .input(z.object({
+      timestamp: z.number()
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const user = await db
+        .selectFrom('user')
+        .select(['name'])
+        .where('id', '=', ctx.user.id)
+        .executeTakeFirstOrThrow()
+
+      runScript('restore_backup', [
+        user.name,
+        input.timestamp.toString()
+      ])
     })
 })
 

@@ -9,6 +9,8 @@ import { api } from '../api'
 import prettyBytes from 'pretty-bytes'
 import { useErrors } from '../hooks/use-errors'
 import { useNavigate } from 'react-router-dom'
+import humanizeDuration from 'humanize-duration'
+import { useToast } from '../hooks/ui/use-toast'
 
 interface Website {
   domain: string
@@ -25,11 +27,15 @@ export const Dashboard = () => {
   const [sshKey, setSshKey] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [isAddingWebsite, setIsAddingWebsite] = useState(false)
+  const [backupBeingRestored, setBackupBeingRestored] = useState<number | null>(null)
+  const [backups, setBackups] = useState<number[]>([])
 
   const newWebsiteDomain = useRef('')
   const newWebsiteAccessPath = useRef('')
 
   const navigate = useNavigate()
+
+  const { toast } = useToast()
 
   const { errors: newWebsiteErrors, updateErrors: updateNewWebsiteErrors, validators: newWebsiteValidators } = useErrors({
     domain: {
@@ -64,7 +70,7 @@ export const Dashboard = () => {
     }
   })
 
-  useEffect(() => {
+  const fetchUserData = useCallback(async () => {
     api.userStorage.query().then(({ storage }) => {
       setUserStorage({
         ...storage,
@@ -79,7 +85,36 @@ export const Dashboard = () => {
     api.userSshKey.query().then(({ sshKey }) => {
       setSshKey(sshKey)
     }).catch((error) => { console.error(error) })
+
+    api.userBackups.query().then(({ backups }) => {
+      setBackups(backups.map(({ timestamp }) => timestamp))
+    }).catch((error) => { console.error(error) })
   }, [])
+
+  useEffect(() => {
+    void fetchUserData()
+  }, [])
+
+  const restoreBackup = useCallback(async (timestamp: number) => {
+    try {
+      setBackupBeingRestored(timestamp)
+      await api.restoreBackup.mutate({ timestamp })
+      await fetchUserData()
+      setBackupBeingRestored(null)
+      toast({
+        variant: 'default',
+        title: 'Backup restored',
+        description: 'Your backup has been restored successfully'
+      })
+    } catch (error) {
+      setBackupBeingRestored(null)
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'An error occured while restoring your backup'
+      })
+    }
+  }, [setBackupBeingRestored])
 
   const addWebsite = useCallback(async (event: React.FormEvent) => {
     event.preventDefault()
@@ -161,6 +196,27 @@ export const Dashboard = () => {
                 <p className='text-black text-xl'>{prettyBytes(userStorage.available * 1e3)}</p>
               </div>
             </div>
+          </div>
+          <div className='bg-white/100 border-solid border-[1px] border-slate-200 px-6 py-5 rounded-xl'>
+            <h2 className="mb-4 text-lg font-semibold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">
+              Backups
+            </h2>
+            {backups.length === 0 && <p className='text-gray-500'>No backups available</p>}
+            <ul className='flex flex-col gap-3'>
+            {backups.sort((a, b) => b - a).map((backupTimestamp, index) =>
+              <li key={index}>
+                <div className="flex justify-between items-center">
+                  <p>{humanizeDuration(Date.now() - backupTimestamp * 1000, { largest: 1, round: true })} ago</p>
+                  <Button
+                    variant='destructiveOutline'
+                    isLoading={backupBeingRestored === backupTimestamp}
+                    onClick={async () => { await restoreBackup(backupTimestamp) }}
+                  >
+                    Restore
+                  </Button>
+                </div>
+              </li>)}
+            </ul>
           </div>
         </aside>
         <main className='bg-white/100 border-solid border-[1px] border-slate-200 px-6 py-5 rounded-xl max-h-screen overflow-auto'>
