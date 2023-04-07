@@ -57,6 +57,12 @@ export const appRouter = router({
         req.input.sshKey
       ])
 
+      runScript('create_database', [
+        req.input.name,
+        req.input.password,
+        req.input.name.replace(/-/g, '_')
+      ])
+
       const result = await db
         .insertInto('user')
         .values({
