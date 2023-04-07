@@ -224,7 +224,7 @@ export const Dashboard = () => {
             Websites
           </h2>
           <p className="text-gray-500 dark:text-gray-400 mb-4">
-            Add the websites you want to monitor.
+            Add your websites to the list below to enable access to them via the domain name.
           </p>
           <ul className="space-y-4">
             {websites.map((website, index) => {
