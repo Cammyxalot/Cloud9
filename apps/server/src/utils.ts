@@ -15,7 +15,7 @@ export const runScript = (script: string, args: string[] = []) => {
     path.join(__dirname, '..', 'scripts', `${script}.sh`)
   ])
   const result = spawnSync(
-    'sh',
+    'bash',
     [path.join(__dirname, '..', 'scripts', `${script}.sh`), ...args],
     {
       encoding: 'utf-8'
