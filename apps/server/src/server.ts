@@ -3,6 +3,7 @@ import { applyWSSHandler } from '@trpc/server/adapters/ws'
 import cors from 'cors'
 import { WebSocketServer } from 'ws'
 import { type IncomingMessage, type ServerResponse, createServer as createHttpServer } from 'http'
+import * as http from 'http'
 import { createServer as createHttpsServer } from 'https'
 import mime from 'mime'
 import * as path from 'path'
@@ -12,6 +13,10 @@ import * as fs from 'fs'
 import { type AppRouter, appRouter } from '.'
 import { createContext } from './context'
 import { db } from './database'
+
+const { API_DOMAINS, APP_DOMAINS } = process.env
+const apiDomains = API_DOMAINS?.split(',') ?? []
+const appDomains = APP_DOMAINS?.split(',') ?? []
 
 // api server
 const apiServer = createHTTPServer({
@@ -44,6 +49,24 @@ const websiteServerHandler = async (req: IncomingMessage, res: ServerResponse) =
   if (url.host === undefined) {
     res.writeHead(400)
     res.end()
+    return
+  }
+
+  // serving cloud9
+  if (apiDomains.includes(url.host) || appDomains.includes(url.host)) {
+    const proxyReq = http.request({
+      method: req.method,
+      headers: req.headers,
+      host: 'localhost',
+      port: apiDomains.includes(url.host) ? 2022 : 5173,
+      path: url.pathname + url.search
+    }, (proxyRes) => {
+      res.writeHead(proxyRes.statusCode ?? 500, proxyRes.headers)
+      proxyRes.pipe(res, { end: true })
+    })
+
+    req.pipe(proxyReq, { end: true })
+
     return
   }
 
