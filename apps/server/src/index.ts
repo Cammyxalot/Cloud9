@@ -6,6 +6,7 @@ import { cronBackup } from './crons/backup'
 import { runScript } from './utils'
 import { type Context } from './context'
 import jwt from 'jsonwebtoken'
+import fs from 'fs'
 
 const { JWT_SECRET } = process.env
 
@@ -210,6 +211,23 @@ export const appRouter = router({
         user.name,
         input.timestamp.toString()
       ])
+    }),
+  downloadBackup: authedProcedure
+    .input(z.object({
+      timestamp: z.number()
+    }))
+    .query(async ({ input, ctx }) => {
+      const user = await db
+        .selectFrom('user')
+        .select(['name'])
+        .where('id', '=', ctx.user.id)
+        .executeTakeFirstOrThrow()
+
+      const data = fs.readFileSync(`/data/backups/${input.timestamp.toString()}/${user.name ?? ''}.tar.gz`)
+
+      return {
+        data: data.toString('base64')
+      }
     })
 })
 
