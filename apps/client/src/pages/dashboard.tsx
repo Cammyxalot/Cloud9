@@ -212,7 +212,7 @@ export const Dashboard = () => {
           </div>
           <div className='bg-white/100 border-solid border-[1px] border-slate-200 px-6 py-5 rounded-xl'>
             <h2 className="mb-4 text-lg font-semibold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">
-              Reset Password
+              Change password
               </h2>
               <div className="flex flex-col gap-3">
                 <form

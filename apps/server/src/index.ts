@@ -219,7 +219,7 @@ export const appRouter = router({
     .mutation(async ({ input, ctx }) => {
       const user = await db
         .selectFrom('user')
-        .select(['id', 'password'])
+        .select(['id', 'password', 'name'])
         .where('id', '=', ctx.user.id)
         .executeTakeFirstOrThrow()
 
@@ -234,6 +234,9 @@ export const appRouter = router({
         })
         .where('id', '=', user.id)
         .execute()
+
+      runScript('change_user_password', [user.name, input.newPassword])
+      runScript('change_user_db_password', [user.name, input.newPassword])
     })
 })
 
