@@ -195,6 +195,16 @@ export const appRouter = router({
         })
       }
     }),
+  createBackup: authedProcedure
+    .mutation(async ({ ctx }) => {
+      const user = await db
+        .selectFrom('user')
+        .select(['name'])
+        .where('id', '=', ctx.user.id)
+        .executeTakeFirstOrThrow()
+
+      runScript('create_backup', [user.name])
+    }),
   restoreBackup: authedProcedure
     .input(z.object({
       timestamp: z.number()

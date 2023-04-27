@@ -29,6 +29,7 @@ export const Dashboard = () => {
   const [isAddingWebsite, setIsAddingWebsite] = useState(false)
   const [backupBeingRestored, setBackupBeingRestored] = useState<number | null>(null)
   const [backups, setBackups] = useState<number[]>([])
+  const [isCreatingBackup, setIsCreatingBackup] = useState(false)
 
   const newWebsiteDomain = useRef('')
   const newWebsiteAccessPath = useRef('')
@@ -140,6 +141,26 @@ export const Dashboard = () => {
     }
   }, [websites])
 
+  const createBackup = useCallback(async () => {
+    setIsCreatingBackup(true)
+    try {
+      await api.createBackup.mutate()
+      await fetchUserData()
+      toast({
+        variant: 'default',
+        title: 'Backup created',
+        description: 'Your backup has been created successfully'
+      })
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'An error occured while creating your backup'
+      })
+    }
+    setIsCreatingBackup(false)
+  }, [])
+
   const logout = () => {
     localStorage.removeItem('name')
     localStorage.removeItem('password')
@@ -166,7 +187,7 @@ export const Dashboard = () => {
               <Input readOnly type="domain" defaultValue={location.hostname} />
               <div className='password flex gap-3'>
                 <Input readOnly type={showPassword ? 'text' : 'password'} defaultValue={localStorage.getItem('password') ?? ''} />
-                <Toggle variant="outline" onClick={() => { setShowPassword(!showPassword) }}>{showPassword ? <Eye/> : <EyeOff />}</Toggle>
+                <Toggle variant="outline" onClick={() => { setShowPassword(!showPassword) }}>{showPassword ? <Eye /> : <EyeOff />}</Toggle>
               </div>
             </div>
           </div>
@@ -203,19 +224,29 @@ export const Dashboard = () => {
             </h2>
             {backups.length === 0 && <p className='text-gray-500'>No backups available</p>}
             <ul className='flex flex-col gap-3'>
-            {backups.sort((a, b) => b - a).map((backupTimestamp, index) =>
-              <li key={index}>
-                <div className="flex justify-between items-center">
-                  <p>{humanizeDuration(Date.now() - backupTimestamp * 1000, { largest: 1, round: true })} ago</p>
-                  <Button
-                    variant='destructiveOutline'
-                    isLoading={backupBeingRestored === backupTimestamp}
-                    onClick={async () => { await restoreBackup(backupTimestamp) }}
-                  >
-                    Restore
-                  </Button>
-                </div>
-              </li>)}
+              {backups.sort((a, b) => b - a).map((backupTimestamp, index) =>
+                <li key={index}>
+                  <div className="flex justify-between items-center">
+                    <p>{humanizeDuration(Date.now() - backupTimestamp * 1000, { largest: 1, round: true })} ago</p>
+                    <Button
+                      variant='destructiveOutline'
+                      isLoading={backupBeingRestored === backupTimestamp}
+                      onClick={async () => { await restoreBackup(backupTimestamp) }}
+                    >
+                      Restore
+                    </Button>
+                  </div>
+                </li>)}
+              <li>
+                <Button
+                  variant='outline'
+                  className='w-full'
+                  isLoading={isCreatingBackup}
+                  onClick={async () => { await createBackup() }}
+                >
+                  Create new backup
+                </Button>
+              </li>
             </ul>
           </div>
         </aside>
