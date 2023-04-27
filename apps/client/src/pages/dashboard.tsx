@@ -26,6 +26,8 @@ export const Dashboard = () => {
   })
   const [sshKey, setSshKey] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const [showNewPassword, setShowNewPassword] = useState(false)
+  const [showOldPassword, setShowOldPassword] = useState(false)
   const [isAddingWebsite, setIsAddingWebsite] = useState(false)
   const [backupBeingRestored, setBackupBeingRestored] = useState<number | null>(null)
   const [backups, setBackups] = useState<number[]>([])
@@ -36,6 +38,33 @@ export const Dashboard = () => {
   const navigate = useNavigate()
 
   const { toast } = useToast()
+
+  const [newPassword, setNewPassword] = useState('')
+  const [oldPassword, setOldPassword] = useState('')
+
+  const changePassword = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (password !== newPassword) {
+      await api.changePassword.mutate({ oldPassword, newPassword })
+      toast({
+        variant: 'default',
+        title: 'Password changed',
+        description: 'Your password has been changed successfully'
+      });
+      (e.target as HTMLFormElement).reset()
+      for (const element of (e.target as HTMLFormElement).elements) {
+        if (element instanceof HTMLInputElement) {
+          element.value = ''
+        }
+      }
+    } else {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'The new password cannot be the same as the old password'
+      })
+    }
+  }, [newPassword, oldPassword])
 
   const { errors: newWebsiteErrors, updateErrors: updateNewWebsiteErrors, validators: newWebsiteValidators } = useErrors({
     domain: {
@@ -140,6 +169,8 @@ export const Dashboard = () => {
     }
   }, [websites])
 
+  const password = localStorage.getItem('password')
+
   const logout = () => {
     localStorage.removeItem('name')
     localStorage.removeItem('password')
@@ -165,7 +196,7 @@ export const Dashboard = () => {
             <div className='flex flex-col gap-3'>
               <Input readOnly type="domain" defaultValue={location.hostname} />
               <div className='password flex gap-3'>
-                <Input readOnly type={showPassword ? 'text' : 'password'} defaultValue={localStorage.getItem('password') ?? ''} />
+                <Input readOnly type={showPassword ? 'text' : 'password'} defaultValue={password ?? ''} />
                 <Toggle variant="outline" onClick={() => { setShowPassword(!showPassword) }}>{showPassword ? <Eye/> : <EyeOff />}</Toggle>
               </div>
             </div>
@@ -178,6 +209,40 @@ export const Dashboard = () => {
               <Input readOnly type="domain" defaultValue={`${localStorage.getItem('name')?.trim() ?? ''}@${location.hostname}`} />
               <Textarea readOnly value={sshKey} className='resize-none' />
             </div>
+          </div>
+          <div className='bg-white/100 border-solid border-[1px] border-slate-200 px-6 py-5 rounded-xl'>
+            <h2 className="mb-4 text-lg font-semibold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">
+              Reset Password
+              </h2>
+              <div className="flex flex-col gap-3">
+                <form
+                  className='flex flex-col gap-3'
+                  onSubmit={changePassword}
+                >
+                  <div className='flex gap-3'>
+                    <Input
+                    type={showOldPassword ? 'text' : 'password'}
+                    placeholder='Previous password'
+                    value={oldPassword}
+                    onChange={(e) => { setOldPassword(e.target.value) }}/>
+                    <Toggle variant="outline" onClick={() => { setShowOldPassword(!showOldPassword) }}>{showOldPassword ? <Eye/> : <EyeOff />}</Toggle>
+                  </div>
+                  <div className='flex gap-3'>
+                    <Input
+                    type={showNewPassword ? 'text' : 'password'}
+                    placeholder='New password'
+                    value={newPassword}
+                    onChange={(e) => { setNewPassword(e.target.value) }}/>
+                    <Toggle variant="outline" onClick={() => { setShowNewPassword(!showNewPassword) }}>{showNewPassword ? <Eye/> : <EyeOff />}</Toggle>
+                  </div>
+                  <Button
+                    type="submit"
+                    disabled={newPassword.length === 0 || oldPassword.length === 0 || newPassword === oldPassword}
+                  >
+                    Reset Password
+                  </Button>
+                </form>
+              </div>
           </div>
           <div className='bg-white/100 border-solid border-[1px] border-slate-200 px-6 py-5 rounded-xl'>
             <h2 className="mb-4 text-lg font-semibold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">

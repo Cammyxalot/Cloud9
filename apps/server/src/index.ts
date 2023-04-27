@@ -210,6 +210,30 @@ export const appRouter = router({
         user.name,
         input.timestamp.toString()
       ])
+    }),
+  changePassword: authedProcedure
+    .input(z.object({
+      oldPassword: z.string(),
+      newPassword: z.string()
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const user = await db
+        .selectFrom('user')
+        .select(['id', 'password'])
+        .where('id', '=', ctx.user.id)
+        .executeTakeFirstOrThrow()
+
+      if (!await argon2.verify(user.password, input.oldPassword)) {
+        throw new TRPCError({ code: 'UNAUTHORIZED' })
+      }
+
+      await db
+        .updateTable('user')
+        .set({
+          password: await argon2.hash(input.newPassword)
+        })
+        .where('id', '=', user.id)
+        .execute()
     })
 })
 
