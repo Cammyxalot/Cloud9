@@ -29,9 +29,12 @@ export const Dashboard = () => {
   const [isAddingWebsite, setIsAddingWebsite] = useState(false)
   const [backupBeingRestored, setBackupBeingRestored] = useState<number | null>(null)
   const [backups, setBackups] = useState<number[]>([])
+  const [databases, setDatabases] = useState<Awaited<ReturnType<typeof api.userDatabases.query>>['databases']>([])
+  const [isCreatingDatabase, setIsCreatingDatabase] = useState(false)
 
   const newWebsiteDomain = useRef('')
   const newWebsiteAccessPath = useRef('')
+  const newDatabaseName = useRef('')
 
   const navigate = useNavigate()
 
@@ -89,6 +92,10 @@ export const Dashboard = () => {
     api.userBackups.query().then(({ backups }) => {
       setBackups(backups.map(({ timestamp }) => timestamp))
     }).catch((error) => { console.error(error) })
+
+    api.userDatabases.query().then(({ databases }) => {
+      setDatabases(databases)
+    }).catch((error) => { console.error(error) })
   }, [])
 
   useEffect(() => {
@@ -140,6 +147,27 @@ export const Dashboard = () => {
     }
   }, [websites])
 
+  const createDatabase = useCallback(async (event: React.FormEvent) => {
+    event.preventDefault()
+
+    const { name } = { name: newDatabaseName.current }
+    if (name !== undefined) {
+      setIsCreatingDatabase(true)
+
+      await api.createDatabase.mutate({ name })
+      setDatabases([...databases, { name, size: 0 }])
+      setIsCreatingDatabase(false)
+      newDatabaseName.current = ''
+    }
+
+    (event.target as HTMLFormElement).reset()
+    for (const element of (event.target as HTMLFormElement).elements) {
+      if (element instanceof HTMLInputElement) {
+        element.value = ''
+      }
+    }
+  }, [databases])
+
   const logout = () => {
     localStorage.removeItem('name')
     localStorage.removeItem('password')
@@ -162,12 +190,51 @@ export const Dashboard = () => {
             <h2 className="mb-4 text-lg font-semibold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">
               Database
             </h2>
-            <div className='flex flex-col gap-3'>
+            <div className='flex flex-col gap-3 mb-5'>
+              <h3 className="text-base font-medium leading-tight tracking-tight text-gray-900 md:text-lg dark:text-white">
+                Login
+              </h3>
               <Input readOnly type="domain" defaultValue={location.hostname} />
               <div className='password flex gap-3'>
                 <Input readOnly type={showPassword ? 'text' : 'password'} defaultValue={localStorage.getItem('password') ?? ''} />
-                <Toggle variant="outline" onClick={() => { setShowPassword(!showPassword) }}>{showPassword ? <Eye/> : <EyeOff />}</Toggle>
+                <Toggle variant="outline" onClick={() => { setShowPassword(!showPassword) }}>{showPassword ? <Eye /> : <EyeOff />}</Toggle>
               </div>
+            </div>
+            <div className='flex flex-col gap-3 mb-5'>
+              <h3 className="text-base font-medium leading-tight tracking-tight text-gray-900 md:text-lg dark:text-white">
+                Your databases
+              </h3>
+              {databases.length === 0 && <p className='text-gray-500'>You don't have any database yet</p>}
+              <ul className='flex flex-col'>
+                {databases.map((database, index) =>
+                  <li key={index}>
+                    <div className="flex justify-between items-center">
+                      <p>
+                        {database.name}&nbsp;
+                        <span className='text-gray-500 text-sm'>
+                          ({prettyBytes(database.size * 1024 * 1024)})
+                        </span>
+                      </p>
+                    </div>
+                  </li>)}
+              </ul>
+            </div>
+            <div className='flex flex-col gap-3'>
+              <h3 className="text-base font-medium leading-tight tracking-tight text-gray-900 md:text-lg dark:text-white">
+                Create a new database
+              </h3>
+              <form onSubmit={createDatabase}>
+                <div className='flex gap-3'>
+                  <Input
+                    type="text"
+                    placeholder="Database name"
+                    onChange={(event) => {
+                      newDatabaseName.current = event.target.value
+                    }}
+                  />
+                  <Button variant="outline" type='submit' disabled={isCreatingDatabase}>Create</Button>
+                </div>
+              </form>
             </div>
           </div>
           <div className='bg-white/100 border-solid border-[1px] border-slate-200 px-6 py-5 rounded-xl'>
@@ -203,19 +270,19 @@ export const Dashboard = () => {
             </h2>
             {backups.length === 0 && <p className='text-gray-500'>No backups available</p>}
             <ul className='flex flex-col gap-3'>
-            {backups.sort((a, b) => b - a).map((backupTimestamp, index) =>
-              <li key={index}>
-                <div className="flex justify-between items-center">
-                  <p>{humanizeDuration(Date.now() - backupTimestamp * 1000, { largest: 1, round: true })} ago</p>
-                  <Button
-                    variant='destructiveOutline'
-                    isLoading={backupBeingRestored === backupTimestamp}
-                    onClick={async () => { await restoreBackup(backupTimestamp) }}
-                  >
-                    Restore
-                  </Button>
-                </div>
-              </li>)}
+              {backups.sort((a, b) => b - a).map((backupTimestamp, index) =>
+                <li key={index}>
+                  <div className="flex justify-between items-center">
+                    <p>{humanizeDuration(Date.now() - backupTimestamp * 1000, { largest: 1, round: true })} ago</p>
+                    <Button
+                      variant='destructiveOutline'
+                      isLoading={backupBeingRestored === backupTimestamp}
+                      onClick={async () => { await restoreBackup(backupTimestamp) }}
+                    >
+                      Restore
+                    </Button>
+                  </div>
+                </li>)}
             </ul>
           </div>
         </aside>
