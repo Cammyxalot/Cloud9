@@ -26,7 +26,6 @@ export const Dashboard = () => {
     total: 0
   })
   const [sshKey, setSshKey] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [showOldPassword, setShowOldPassword] = useState(false)
   const [isAddingWebsite, setIsAddingWebsite] = useState(false)
@@ -321,30 +320,18 @@ export const Dashboard = () => {
           <Button onClick={logout}>Log out</Button>
         </header>
         <aside className="flex flex-col gap-8">
-          <div className='bg-white/100 border-solid border-[1px] border-slate-200 px-6 py-5 rounded-xl'>
+          <div className="bg-white/100 border-solid border-[1px] border-slate-200 px-6 py-5 rounded-xl">
             <h2 className="mb-4 text-lg font-semibold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">
-              Database
+              SSH
             </h2>
-            <div className='flex flex-col gap-3'>
-              <Input readOnly type="domain" defaultValue={location.hostname} />
-              <div className='password flex gap-3'>
-                <Input readOnly type={showPassword ? 'text' : 'password'} defaultValue={password ?? ''} />
-                <Toggle variant="outline" onClick={() => { setShowPassword(!showPassword) }}>{showPassword ? <Eye /> : <EyeOff />}</Toggle>
-              </div>
-            </div>
-            <div className="bg-white/100 border-solid border-[1px] border-slate-200 px-6 py-5 rounded-xl">
-              <h2 className="mb-4 text-lg font-semibold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">
-                SSH
-              </h2>
-              <div className="flex flex-col gap-3">
-                <Input
-                  readOnly
-                  type="domain"
-                  defaultValue={`${localStorage.getItem('name')?.trim() ?? ''
-                    }@${location.hostname}`}
-                />
-                <Textarea readOnly value={sshKey} className="resize-none" />
-              </div>
+            <div className="flex flex-col gap-3">
+              <Input
+                readOnly
+                type="domain"
+                defaultValue={`${localStorage.getItem('name')?.trim() ?? ''
+                  }@${location.hostname}`}
+              />
+              <Textarea readOnly value={sshKey} className="resize-none" />
             </div>
           </div>
           <div className='bg-white/100 border-solid border-[1px] border-slate-200 px-6 py-5 rounded-xl'>
@@ -405,6 +392,7 @@ export const Dashboard = () => {
             </h2>
             {backups.length === 0 && <p className='text-gray-500'>No backups available</p>}
             <ul className='flex flex-col gap-3'>
+              {backups.length === 0 && <li></li>}
               {backups.sort((a, b) => b - a).map((backupTimestamp, index) =>
                 <li key={index}>
                   <div className="flex justify-between items-center">
