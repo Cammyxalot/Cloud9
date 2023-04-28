@@ -27,6 +27,7 @@ export const Dashboard = () => {
   const [sshKey, setSshKey] = useState('')
   const [isAddingWebsite, setIsAddingWebsite] = useState(false)
   const [backupBeingRestored, setBackupBeingRestored] = useState<number | null>(null)
+  const [backupBeingDownloaded, setBackupBeingDownloaded] = useState<number | null>(null)
   const [backups, setBackups] = useState<number[]>([])
   const [databases, setDatabases] = useState<Awaited<ReturnType<typeof api.userDatabases.query>>['databases']>([])
   const [isCreatingDatabase, setIsCreatingDatabase] = useState(false)
@@ -140,6 +141,35 @@ export const Dashboard = () => {
     }
   }, [setBackupBeingRestored])
 
+  const downloadBackup = useCallback(async (timestamp: number) => {
+    try {
+      setBackupBeingDownloaded(timestamp)
+      await api.downloadBackup.query({ timestamp }).then(({ data }: { data: string }) => {
+        const link = document.createElement('a')
+        link.href = 'data:application/gzip;base64,' + data
+        link.setAttribute('download', `backup-${timestamp}.tar.gz`)
+        document.body.appendChild(link)
+        link.click()
+        link.remove()
+      })
+
+      setBackupBeingDownloaded(null)
+      toast({
+        variant: 'default',
+        title: 'Backup downloaded',
+        description: 'Your backup has been downloaded successfully'
+      })
+    } catch (error) {
+      setBackupBeingDownloaded(null)
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'An error occured while downloading your backup'
+      })
+      throw error
+    }
+  }, [setBackupBeingDownloaded])
+
   const addWebsite = useCallback(async (event: React.FormEvent) => {
     event.preventDefault()
 
@@ -236,10 +266,11 @@ export const Dashboard = () => {
             </h2>
             {backups.length === 0 && <p className='text-gray-500'>No backups available</p>}
             <ul className='flex flex-col gap-3'>
-              {backups.sort((a, b) => b - a).map((backupTimestamp, index) =>
-                <li key={index}>
-                  <div className="flex justify-between items-center">
-                    <p>{humanizeDuration(Date.now() - backupTimestamp * 1000, { largest: 1, round: true })} ago</p>
+            {backups.sort((a, b) => b - a).map((backupTimestamp, index) =>
+              <li key={index}>
+                <div className="flex justify-between items-center">
+                  <p>{humanizeDuration(Date.now() - backupTimestamp * 1000, { largest: 1, round: true })} ago</p>
+                  <div className='flex gap-3'>
                     <Button
                       variant='destructiveOutline'
                       isLoading={backupBeingRestored === backupTimestamp}
@@ -247,8 +278,16 @@ export const Dashboard = () => {
                     >
                       Restore
                     </Button>
+                    <Button
+                      variant='outline'
+                      isLoading={backupBeingDownloaded === backupTimestamp}
+                      onClick={async () => { await downloadBackup(backupTimestamp) }}
+                    >
+                      Download
+                    </Button>
                   </div>
-                </li>)}
+                </div>
+              </li>)}
             </ul>
           </div>
         </aside>
