@@ -2,15 +2,15 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { Button } from '../components/ui/button'
 import { Progress } from '../components/ui/progress'
 import { Input } from '../components/ui/input'
-import { Toggle } from '../components/ui/toggle'
 import { Textarea } from '../components/ui/textarea'
-import { Eye, EyeOff } from 'lucide-react'
 import { api } from '../api'
 import prettyBytes from 'pretty-bytes'
 import { useErrors } from '../hooks/use-errors'
 import { useNavigate } from 'react-router-dom'
 import humanizeDuration from 'humanize-duration'
 import { useToast } from '../hooks/ui/use-toast'
+import { HardDrive } from 'lucide-react'
+import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '../components/ui/tooltip'
 
 interface Website {
   domain: string
@@ -25,14 +25,16 @@ export const Dashboard = () => {
     total: 0
   })
   const [sshKey, setSshKey] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
   const [isAddingWebsite, setIsAddingWebsite] = useState(false)
   const [backupBeingRestored, setBackupBeingRestored] = useState<number | null>(null)
   const [backupBeingDownloaded, setBackupBeingDownloaded] = useState<number | null>(null)
   const [backups, setBackups] = useState<number[]>([])
+  const [databases, setDatabases] = useState<Awaited<ReturnType<typeof api.userDatabases.query>>['databases']>([])
+  const [isCreatingDatabase, setIsCreatingDatabase] = useState(false)
 
   const newWebsiteDomain = useRef('')
   const newWebsiteAccessPath = useRef('')
+  const newDatabaseName = useRef('')
 
   const navigate = useNavigate()
 
@@ -71,6 +73,24 @@ export const Dashboard = () => {
     }
   })
 
+  const { errors: newDatabaseErrors, updateErrors: updateNewDatabaseErrors, validators: newDatabaseValidators } = useErrors({
+    name: {
+      ref: newDatabaseName,
+      validator: (value: string) => {
+        if (value.length === 0) {
+          return 'Name is required'
+        }
+
+        const nameRegex = /^[\w-]+$/
+        if (!nameRegex.test(value)) {
+          return 'Name must be a valid name'
+        }
+
+        return undefined
+      }
+    }
+  })
+
   const fetchUserData = useCallback(async () => {
     api.userStorage.query().then(({ storage }) => {
       setUserStorage({
@@ -89,6 +109,10 @@ export const Dashboard = () => {
 
     api.userBackups.query().then(({ backups }) => {
       setBackups(backups.map(({ timestamp }) => timestamp))
+    }).catch((error) => { console.error(error) })
+
+    api.userDatabases.query().then(({ databases }) => {
+      setDatabases(databases)
     }).catch((error) => { console.error(error) })
   }, [])
 
@@ -120,7 +144,7 @@ export const Dashboard = () => {
   const downloadBackup = useCallback(async (timestamp: number) => {
     try {
       setBackupBeingDownloaded(timestamp)
-      await api.downloadBackup.query({ timestamp }).then(({ data }) => {
+      await api.downloadBackup.query({ timestamp }).then(({ data }: { data: string }) => {
         const link = document.createElement('a')
         link.href = 'data:application/gzip;base64,' + data
         link.setAttribute('download', `backup-${timestamp}.tar.gz`)
@@ -170,6 +194,27 @@ export const Dashboard = () => {
     }
   }, [websites])
 
+  const createDatabase = useCallback(async (event: React.FormEvent) => {
+    event.preventDefault()
+
+    const { name } = { name: newDatabaseName.current }
+    if (name !== undefined) {
+      setIsCreatingDatabase(true)
+
+      await api.createDatabase.mutate({ name })
+      setDatabases([...databases, { name, size: 0 }])
+      setIsCreatingDatabase(false)
+      newDatabaseName.current = ''
+    }
+
+    (event.target as HTMLFormElement).reset()
+    for (const element of (event.target as HTMLFormElement).elements) {
+      if (element instanceof HTMLInputElement) {
+        element.value = ''
+      }
+    }
+  }, [databases])
+
   const logout = () => {
     localStorage.removeItem('name')
     localStorage.removeItem('password')
@@ -188,18 +233,6 @@ export const Dashboard = () => {
           <Button onClick={logout}>Log out</Button>
         </header>
         <aside className="flex flex-col gap-8">
-          <div className='bg-white/100 border-solid border-[1px] border-slate-200 px-6 py-5 rounded-xl'>
-            <h2 className="mb-4 text-lg font-semibold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">
-              Database
-            </h2>
-            <div className='flex flex-col gap-3'>
-              <Input readOnly type="domain" defaultValue={location.hostname} />
-              <div className='password flex gap-3'>
-                <Input readOnly type={showPassword ? 'text' : 'password'} defaultValue={localStorage.getItem('password') ?? ''} />
-                <Toggle variant="outline" onClick={() => { setShowPassword(!showPassword) }}>{showPassword ? <Eye/> : <EyeOff />}</Toggle>
-              </div>
-            </div>
-          </div>
           <div className='bg-white/100 border-solid border-[1px] border-slate-200 px-6 py-5 rounded-xl'>
             <h2 className="mb-4 text-lg font-semibold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">
               SSH
@@ -258,75 +291,136 @@ export const Dashboard = () => {
             </ul>
           </div>
         </aside>
-        <main className='bg-white/100 border-solid border-[1px] border-slate-200 px-6 py-5 rounded-xl max-h-screen overflow-auto'>
-          <h2 className="text-lg font-semibold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white mb-4">
-            Websites
-          </h2>
-          <p className="text-gray-500 dark:text-gray-400 mb-4">
-            Add your websites to the list below to enable access to them via the domain name.
-          </p>
-          <ul className="space-y-4">
-            {websites.map((website, index) => {
-              return <li key={index} className="flex gap-2 last:!mb-4">
-                <Input
-                  type="text"
-                  placeholder="Domain"
-                  value={website.domain}
-                  onChange={(event) => {
-                    const newWebsites = [...websites]
-                    newWebsites[index] = { ...newWebsites[index], domain: event.target.value }
-                    setWebsites(newWebsites)
-                  }}
-                />
-                <Input
-                  type="text"
-                  placeholder="Path"
-                  value={website.accessPath}
-                  onChange={(event) => {
-                    const newWebsites = [...websites]
-                    newWebsites[index] = { ...newWebsites[index], accessPath: event.target.value }
-                    setWebsites(newWebsites)
-                  }}
-                />
-              </li>
-            })}
-            <li>
-              <form onSubmit={addWebsite} className="space-y-4 md:space-y-6 flex flex-col" action="#">
-                <div className="flex gap-2">
+        <main className='flex-1 flex flex-col gap-8'>
+          <div className='bg-white/100 border-solid border-[1px] border-slate-200 px-6 py-5 rounded-xl h-fit'>
+            <h2 className="text-lg font-semibold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white mb-4">
+              Websites
+            </h2>
+            <p className="text-gray-500 dark:text-gray-400 mb-4">
+              Add your websites to the list below to enable access to them via the domain name.
+            </p>
+            <ul className="space-y-4">
+              {websites.map((website, index) => {
+                return <li key={index} className="flex gap-2 last:!mb-4">
                   <Input
                     type="text"
                     placeholder="Domain"
-                    defaultValue={newWebsiteDomain.current}
-                    onChange={(e) => { newWebsiteDomain.current = e.target.value }}
-                    validator={(value) => {
-                      const error = newWebsiteValidators.domain.validator(value)
-                      updateNewWebsiteErrors()
-                      return error
+                    value={website.domain}
+                    onChange={(event) => {
+                      const newWebsites = [...websites]
+                      newWebsites[index] = { ...newWebsites[index], domain: event.target.value }
+                      setWebsites(newWebsites)
                     }}
                   />
                   <Input
                     type="text"
                     placeholder="Path"
-                    defaultValue={newWebsiteAccessPath.current}
-                    onChange={(e) => { newWebsiteAccessPath.current = e.target.value }}
+                    value={website.accessPath}
+                    onChange={(event) => {
+                      const newWebsites = [...websites]
+                      newWebsites[index] = { ...newWebsites[index], accessPath: event.target.value }
+                      setWebsites(newWebsites)
+                    }}
+                  />
+                </li>
+              })}
+              <li>
+                <form onSubmit={addWebsite} className="space-y-4 md:space-y-6 flex flex-col" action="#">
+                  <div className="flex gap-2">
+                    <Input
+                      type="text"
+                      placeholder="Domain"
+                      defaultValue={newWebsiteDomain.current}
+                      onChange={(e) => { newWebsiteDomain.current = e.target.value }}
+                      validator={(value) => {
+                        const error = newWebsiteValidators.domain.validator(value)
+                        updateNewWebsiteErrors()
+                        return error
+                      }}
+                    />
+                    <Input
+                      type="text"
+                      placeholder="Path"
+                      defaultValue={newWebsiteAccessPath.current}
+                      onChange={(e) => { newWebsiteAccessPath.current = e.target.value }}
+                      validator={(value) => {
+                        const error = newWebsiteValidators.accessPath.validator(value)
+                        updateNewWebsiteErrors()
+                        return error
+                      }}
+                    />
+                  </div>
+                  <Button
+                    type="submit"
+                    disabled={newWebsiteErrors.length > 0 || newWebsiteDomain.current.length === 0 || newWebsiteAccessPath.current.length === 0}
+                    className='w-full'
+                    isLoading={isAddingWebsite}
+                  >
+                    Add website
+                  </Button>
+                </form>
+              </li>
+            </ul>
+          </div>
+          <div className='bg-white/100 border-solid border-[1px] border-slate-200 px-6 py-5 rounded-xl h-fit'>
+            <h2 className="text-lg font-semibold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white mb-4">
+              Databases
+            </h2>
+            <p className="text-gray-500 dark:text-gray-400 mb-4">
+              Create databases to store your data, and access them on&nbsp;
+              <code className='bg-gray-100 dark:bg-gray-800 rounded-md px-2 py-1'>{location.hostname}</code>
+              &nbsp;with your credentials.
+            </p>
+            <ul className="space-y-4">
+              {databases.map((database, index) =>
+                <li key={index}>
+                  <div className="flex gap-2">
+                    <Input
+                      type="text"
+                      defaultValue={database.name}
+                      readOnly
+                    />
+                    <div>
+                      <TooltipProvider>
+                        <Tooltip delayDuration={0}>
+                          <TooltipTrigger>
+                            <div className='inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors data-[state=on]:bg-slate-200 dark:hover:bg-slate-800 dark:data-[state=on]:bg-slate-700 focus:outline-none dark:text-slate-100 focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 dark:focus:ring-offset-slate-900 dark:hover:text-slate-100 dark:data-[state=on]:text-slate-100 bg-transparent border border-slate-200 hover:bg-slate-100 dark:border-slate-700 h-10 px-3'>
+                              <HardDrive className='w-6 h-6' />
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            {prettyBytes(database.size * 1024 * 1024)}
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                  </div>
+                </li>)}
+              <li>
+                <form onSubmit={createDatabase} className="space-y-4 md:space-y-6 flex flex-col" action="#">
+                  <Input
+                    type="text"
+                    placeholder="Database name"
+                    defaultValue={newDatabaseName.current}
+                    onChange={(e) => { newDatabaseName.current = e.target.value }}
                     validator={(value) => {
-                      const error = newWebsiteValidators.accessPath.validator(value)
-                      updateNewWebsiteErrors()
+                      const error = newDatabaseValidators.name.validator(value)
+                      updateNewDatabaseErrors()
                       return error
                     }}
                   />
-                </div>
-                <Button
-                  type="submit"
-                  disabled={newWebsiteErrors.length > 0 || newWebsiteDomain.current.length === 0 || newWebsiteAccessPath.current.length === 0}
-                  className='w-full'
-                  isLoading={isAddingWebsite}
-                >
-                  Add website
-                </Button>
-              </form>
-            </li>
-          </ul>
+                  <Button
+                    type="submit"
+                    disabled={newDatabaseErrors.length > 0 || newDatabaseName.current.length === 0}
+                    className='w-full'
+                    isLoading={isCreatingDatabase}
+                  >
+                    Add database
+                  </Button>
+                </form>
+              </li>
+            </ul>
+          </div>
         </main>
       </div>
     </div>
