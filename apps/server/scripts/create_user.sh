@@ -22,20 +22,21 @@ create_user() {
   # Set user password
   echo "$username:$password" | chpasswd
 
+  # Copy user files to temporary directory
+  mkdir /tmp/$username
+  cp -a /home/$username/. /tmp/$username/
+
   # Mount user disk
   mount -t auto -o loop /media/$username.img /home/$username
 
-  # Remove all files from user directory
-  rm -rf /home/$username/*
+  # Copy user files back to home directory
+  cp -a /tmp/$username/. /home/$username/
+
+  # Clean up
+  rm -r /tmp/$username
 
   # Add ssh key
-  mkdir /home/$username/.ssh
   echo $ssh_key > /home/$username/.ssh/authorized_keys
-
-  # Create /home/$username/sites directory
-  mkdir /home/$username/sites
-  mkdir -p /etc/nginx/sites
-  ln -s /home/$username/sites /etc/nginx/sites/$username
 
   # Add user directory permissions  
   chown -R $username:$username /home/$username

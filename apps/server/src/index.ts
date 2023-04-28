@@ -6,6 +6,7 @@ import { type Context } from './context'
 import { cronBackup } from './crons/backup'
 import { db } from './database'
 import { runScript } from './utils'
+import fs from 'fs'
 
 const { JWT_SECRET } = process.env
 
@@ -198,11 +199,20 @@ export const appRouter = router({
         return [
           {
             timestamp: Number(backupTimestamp)
-          }
-        ]
+          }]
       })
     }
   }),
+  createBackup: authedProcedure
+    .mutation(async ({ ctx }) => {
+      const user = await db
+        .selectFrom('user')
+        .select(['name'])
+        .where('id', '=', ctx.user.id)
+        .executeTakeFirstOrThrow()
+
+      runScript('create_backup', [user.name])
+    }),
   restoreBackup: authedProcedure
     .input(
       z.object({
@@ -251,7 +261,105 @@ export const appRouter = router({
         }
       }
     }
-  })
+  }),
+  changePassword: authedProcedure
+    .input(z.object({
+      oldPassword: z.string(),
+      newPassword: z.string()
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const user = await db
+        .selectFrom('user')
+        .select(['id', 'password', 'name'])
+        .where('id', '=', ctx.user.id)
+        .executeTakeFirstOrThrow()
+
+      if (!await argon2.verify(user.password, input.oldPassword)) {
+        throw new TRPCError({ code: 'UNAUTHORIZED' })
+      }
+
+      await db
+        .updateTable('user')
+        .set({
+          password: await argon2.hash(input.newPassword)
+        })
+        .where('id', '=', user.id)
+        .execute()
+
+      runScript('change_user_password', [user.name, input.newPassword])
+      runScript('change_user_db_password', [user.name, input.newPassword])
+    }),
+  downloadBackup: authedProcedure
+    .input(z.object({
+      timestamp: z.number()
+    }))
+    .query(async ({ input, ctx }) => {
+      const user = await db
+        .selectFrom('user')
+        .select(['name'])
+        .where('id', '=', ctx.user.id)
+        .executeTakeFirstOrThrow()
+
+      const data = fs.readFileSync(`/data/backups/${input.timestamp.toString()}/${user.name ?? ''}.tar.gz`)
+
+      return {
+        data: data.toString('base64')
+      }
+    }),
+  userDatabases: authedProcedure
+    .query(async ({ ctx }) => {
+      const user = await db
+        .selectFrom('user')
+        .select(['name'])
+        .where('id', '=', ctx.user.id)
+        .executeTakeFirstOrThrow()
+
+      const databasesName = runScript('get_user_databases_name', [user.name]).trim().split(' ')
+      const databasesSize = runScript('get_user_databases_size', [user.name]).trim().split(' ').reduce<Array<{ name: string, size: number }>>((acc, cur, i) => {
+        if (i % 2 === 0) {
+          acc.push({
+            name: cur,
+            size: 0
+          })
+        } else {
+          acc[acc.length - 1].size = parseFloat(cur)
+        }
+
+        return acc
+      }, [])
+
+      return {
+        databases: databasesName.flatMap((databaseName) => {
+          if (databaseName === '') {
+            return []
+          }
+
+          const databaseSize = databasesSize.find((databaseSize) => databaseSize.name === databaseName)?.size
+
+          return [{
+            name: databaseName,
+            size: databaseSize !== undefined ? databaseSize : 0
+          }]
+        })
+      }
+    }),
+  createDatabase: authedProcedure
+    .input(z.object({
+      name: z.string()
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const user = await db
+        .selectFrom('user')
+        .select(['name'])
+        .where('id', '=', ctx.user.id)
+        .executeTakeFirstOrThrow()
+
+      runScript('create_database', [
+        user.name,
+        input.name,
+        input.name.replace(/-/g, '_')
+      ])
+    })
 })
 
 export type AppRouter = typeof appRouter
