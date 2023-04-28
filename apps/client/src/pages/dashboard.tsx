@@ -33,6 +33,7 @@ export const Dashboard = () => {
   const [backupBeingRestored, setBackupBeingRestored] = useState<number | null>(null)
   const [backupBeingDownloaded, setBackupBeingDownloaded] = useState<number | null>(null)
   const [backups, setBackups] = useState<number[]>([])
+  const [isCreatingBackup, setIsCreatingBackup] = useState(false)
   const [databases, setDatabases] = useState<Awaited<ReturnType<typeof api.userDatabases.query>>['databases']>([])
   const [isCreatingDatabase, setIsCreatingDatabase] = useState(false)
 
@@ -248,6 +249,26 @@ export const Dashboard = () => {
     }
   }, [databases])
 
+  const createBackup = useCallback(async () => {
+    setIsCreatingBackup(true)
+    try {
+      await api.createBackup.mutate()
+      await fetchUserData()
+      toast({
+        variant: 'default',
+        title: 'Backup created',
+        description: 'Your backup has been created successfully'
+      })
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'An error occured while creating your backup'
+      })
+    }
+    setIsCreatingBackup(false)
+  }, [])
+
   const logout = () => {
     localStorage.removeItem('name')
     localStorage.removeItem('password')
@@ -274,7 +295,7 @@ export const Dashboard = () => {
               <Input readOnly type="domain" defaultValue={location.hostname} />
               <div className='password flex gap-3'>
                 <Input readOnly type={showPassword ? 'text' : 'password'} defaultValue={password ?? ''} />
-                <Toggle variant="outline" onClick={() => { setShowPassword(!showPassword) }}>{showPassword ? <Eye/> : <EyeOff />}</Toggle>
+                <Toggle variant="outline" onClick={() => { setShowPassword(!showPassword) }}>{showPassword ? <Eye /> : <EyeOff />}</Toggle>
               </div>
             </div>
           </div>
@@ -290,36 +311,36 @@ export const Dashboard = () => {
           <div className='bg-white/100 border-solid border-[1px] border-slate-200 px-6 py-5 rounded-xl'>
             <h2 className="mb-4 text-lg font-semibold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">
               Change password
-              </h2>
-              <div className="flex flex-col gap-3">
-                <form
-                  className='flex flex-col gap-3'
-                  onSubmit={changePassword}
-                >
-                  <div className='flex gap-3'>
-                    <Input
+            </h2>
+            <div className="flex flex-col gap-3">
+              <form
+                className='flex flex-col gap-3'
+                onSubmit={changePassword}
+              >
+                <div className='flex gap-3'>
+                  <Input
                     type={showOldPassword ? 'text' : 'password'}
                     placeholder='Previous password'
                     value={oldPassword}
-                    onChange={(e) => { setOldPassword(e.target.value) }}/>
-                    <Toggle variant="outline" onClick={() => { setShowOldPassword(!showOldPassword) }}>{showOldPassword ? <Eye/> : <EyeOff />}</Toggle>
-                  </div>
-                  <div className='flex gap-3'>
-                    <Input
+                    onChange={(e) => { setOldPassword(e.target.value) }} />
+                  <Toggle variant="outline" onClick={() => { setShowOldPassword(!showOldPassword) }}>{showOldPassword ? <Eye /> : <EyeOff />}</Toggle>
+                </div>
+                <div className='flex gap-3'>
+                  <Input
                     type={showNewPassword ? 'text' : 'password'}
                     placeholder='New password'
                     value={newPassword}
-                    onChange={(e) => { setNewPassword(e.target.value) }}/>
-                    <Toggle variant="outline" onClick={() => { setShowNewPassword(!showNewPassword) }}>{showNewPassword ? <Eye/> : <EyeOff />}</Toggle>
-                  </div>
-                  <Button
-                    type="submit"
-                    disabled={newPassword.length === 0 || oldPassword.length === 0 || newPassword === oldPassword}
-                  >
-                    Reset Password
-                  </Button>
-                </form>
-              </div>
+                    onChange={(e) => { setNewPassword(e.target.value) }} />
+                  <Toggle variant="outline" onClick={() => { setShowNewPassword(!showNewPassword) }}>{showNewPassword ? <Eye /> : <EyeOff />}</Toggle>
+                </div>
+                <Button
+                  type="submit"
+                  disabled={newPassword.length === 0 || oldPassword.length === 0 || newPassword === oldPassword}
+                >
+                  Reset Password
+                </Button>
+              </form>
+            </div>
           </div>
           <div className='bg-white/100 border-solid border-[1px] border-slate-200 px-6 py-5 rounded-xl'>
             <h2 className="mb-4 text-lg font-semibold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">
@@ -345,28 +366,38 @@ export const Dashboard = () => {
             </h2>
             {backups.length === 0 && <p className='text-gray-500'>No backups available</p>}
             <ul className='flex flex-col gap-3'>
-            {backups.sort((a, b) => b - a).map((backupTimestamp, index) =>
-              <li key={index}>
-                <div className="flex justify-between items-center">
-                  <p>{humanizeDuration(Date.now() - backupTimestamp * 1000, { largest: 1, round: true })} ago</p>
-                  <div className='flex gap-3'>
-                    <Button
-                      variant='destructiveOutline'
-                      isLoading={backupBeingRestored === backupTimestamp}
-                      onClick={async () => { await restoreBackup(backupTimestamp) }}
-                    >
-                      Restore
-                    </Button>
-                    <Button
-                      variant='outline'
-                      isLoading={backupBeingDownloaded === backupTimestamp}
-                      onClick={async () => { await downloadBackup(backupTimestamp) }}
-                    >
-                      Download
-                    </Button>
+              {backups.sort((a, b) => b - a).map((backupTimestamp, index) =>
+                <li key={index}>
+                  <div className="flex justify-between items-center">
+                    <p>{humanizeDuration(Date.now() - backupTimestamp * 1000, { largest: 1, round: true })} ago</p>
+                    <div className='flex gap-3'>
+                      <Button
+                        variant='destructiveOutline'
+                        isLoading={backupBeingRestored === backupTimestamp}
+                        onClick={async () => { await restoreBackup(backupTimestamp) }}
+                      >
+                        Restore
+                      </Button>
+                      <Button
+                        variant='outline'
+                        isLoading={backupBeingDownloaded === backupTimestamp}
+                        onClick={async () => { await downloadBackup(backupTimestamp) }}
+                      >
+                        Download
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              </li>)}
+                </li>)}
+              <li>
+                <Button
+                  variant='outline'
+                  className='w-full'
+                  isLoading={isCreatingBackup}
+                  onClick={async () => { await createBackup() }}
+                >
+                  Create new backup
+                </Button>
+              </li>
             </ul>
           </div>
         </aside>
