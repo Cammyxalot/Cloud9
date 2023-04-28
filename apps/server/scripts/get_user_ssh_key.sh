@@ -4,4 +4,4 @@ get_user_ssh_key() {
   cat /home/$username/.ssh/authorized_keys
 }
 
-get_user_ssh_key $1
+get_user_ssh_key "$1"

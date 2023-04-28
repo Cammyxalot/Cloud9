@@ -7,4 +7,4 @@ get_user_databases_name() {
   echo $databases_name
 }
 
-get_user_databases_name $1
+get_user_databases_name "$1"

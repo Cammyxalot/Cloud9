@@ -15,4 +15,4 @@ restore_backup() {
   rm /data/backups/$timestamp/$username.tar.gz
 }
 
-restore_backup $1 $2
+restore_backup "$1" "$2"

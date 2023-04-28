@@ -10,7 +10,7 @@ create_backup() {
     for file in /home/*; do
         username=$(basename $file)
 
-        dump_databases $username
+        dump_databases "$username"
 
         tar -cvzf /data/backups/$timestamp/$username.tar.gz $file
     done

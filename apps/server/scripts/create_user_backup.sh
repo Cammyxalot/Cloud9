@@ -5,7 +5,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 create_user_backup() {
     username=$1
 
-    dump_databases $username
+    dump_databases "$username"
 
     timestamp=$(date +%s)
 
@@ -14,4 +14,4 @@ create_user_backup() {
     tar -cvzf /data/backups/$timestamp/$username.tar.gz /home/$username
 }
 
-create_user_backup $1
+create_user_backup "$1"

@@ -36,10 +36,10 @@ create_user() {
   rm -r /tmp/$username
 
   # Add ssh key
-  echo $ssh_key > /home/$username/.ssh/authorized_keys
+  echo "$ssh_key" > /home/$username/.ssh/authorized_keys
 
   # Add user directory permissions  
   chown -R $username:$username /home/$username
 }
 
-create_user $1 $2 $3
+create_user "$1" "$2" "$3"

@@ -7,4 +7,4 @@ get_user_databases_size() {
   echo $databases_size
 }
 
-get_user_databases_size $1
+get_user_databases_size "$1"

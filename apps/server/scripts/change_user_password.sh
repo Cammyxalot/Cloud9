@@ -6,4 +6,4 @@ change_user_password() {
   echo "$username:$password" | chpasswd
 }
 
-change_user_password $1 $2
+change_user_password "$1" "$2"

@@ -4,4 +4,4 @@ get_user_storage_available() {
   df /home/$username | sed 1d | grep -v used | awk '{ print $4 "\t" }'
 }
 
-get_user_storage_available $1
+get_user_storage_available "$1"

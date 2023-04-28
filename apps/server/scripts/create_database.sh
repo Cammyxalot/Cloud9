@@ -15,4 +15,4 @@ create_database() {
   mysql -u root -p$DB_ROOT_PASSWORD -h $DB_HOST -e "GRANT ALL PRIVILEGES ON $database.* TO '$username'@'%'"
 }
 
-create_database $1 $2 $3
+create_database "$1" "$2" "$3"

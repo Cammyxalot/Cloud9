@@ -4,4 +4,4 @@ get_user_backups() {
   find /data/backups/*/$username.tar.gz -type f | sed 's/\/data\/backups\///g' | sed 's/\/'$username'.tar.gz//g'
 }
 
-get_user_backups $1
+get_user_backups "$1"
