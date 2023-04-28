@@ -39,6 +39,9 @@ services:
       # - .:/app
       - ./apps/client/src:/app/apps/client/src
       - /app/node_modules
+      - ./.home:/home
+      - ./.data:/data
+      - ./user_skel:/etc/skel
     networks:
       - server
     depends_on:
