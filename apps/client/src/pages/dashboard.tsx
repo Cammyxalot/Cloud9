@@ -1,81 +1,81 @@
-import { useState, useEffect, useCallback, useRef } from "react";
-import { Button } from "../components/ui/button";
-import { Progress } from "../components/ui/progress";
-import { Input } from "../components/ui/input";
-import { Toggle } from "../components/ui/toggle";
-import { Textarea } from "../components/ui/textarea";
-import { Eye, EyeOff } from "lucide-react";
-import { api } from "../api";
-import prettyBytes from "pretty-bytes";
-import { useErrors } from "../hooks/use-errors";
-import { useNavigate } from "react-router-dom";
-import humanizeDuration from "humanize-duration";
-import { useToast } from "../hooks/ui/use-toast";
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { Button } from '../components/ui/button'
+import { Progress } from '../components/ui/progress'
+import { Input } from '../components/ui/input'
+import { Toggle } from '../components/ui/toggle'
+import { Textarea } from '../components/ui/textarea'
+import { Eye, EyeOff } from 'lucide-react'
+import { api } from '../api'
+import prettyBytes from 'pretty-bytes'
+import { useErrors } from '../hooks/use-errors'
+import { useNavigate } from 'react-router-dom'
+import humanizeDuration from 'humanize-duration'
+import { useToast } from '../hooks/ui/use-toast'
 
 interface Website {
-  domain: string;
-  accessPath: string;
+  domain: string
+  accessPath: string
 }
 
 export const Dashboard = () => {
-  const [websites, setWebsites] = useState<Website[]>([]);
+  const [websites, setWebsites] = useState<Website[]>([])
   const [userStorage, setUserStorage] = useState({
     used: 0,
     available: 0,
-    total: 0,
-  });
-  const [sshKey, setSshKey] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [isAddingWebsite, setIsAddingWebsite] = useState(false);
+    total: 0
+  })
+  const [sshKey, setSshKey] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [isAddingWebsite, setIsAddingWebsite] = useState(false)
   const [backupBeingRestored, setBackupBeingRestored] = useState<number | null>(
     null
-  );
-  const [backups, setBackups] = useState<number[]>([]);
+  )
+  const [backups, setBackups] = useState<number[]>([])
 
-  const newWebsiteDomain = useRef("");
-  const newWebsiteAccessPath = useRef("");
+  const newWebsiteDomain = useRef('')
+  const newWebsiteAccessPath = useRef('')
 
-  const navigate = useNavigate();
+  const navigate = useNavigate()
 
-  const { toast } = useToast();
+  const { toast } = useToast()
 
   const {
     errors: newWebsiteErrors,
     updateErrors: updateNewWebsiteErrors,
-    validators: newWebsiteValidators,
+    validators: newWebsiteValidators
   } = useErrors({
     domain: {
       ref: newWebsiteDomain,
       validator: (value: string) => {
         if (value.length === 0) {
-          return "Domain is required";
+          return 'Domain is required'
         }
 
         const domainRegex =
-          /^(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}$/;
+          /^(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}$/
         if (!domainRegex.test(value)) {
-          return "Domain must be a valid domain name";
+          return 'Domain must be a valid domain name'
         }
 
-        return undefined;
-      },
+        return undefined
+      }
     },
     accessPath: {
       ref: newWebsiteAccessPath,
       validator: (value: string) => {
         if (value.length === 0) {
-          return "Access path is required";
+          return 'Access path is required'
         }
 
-        const accessPathRegex = /^(\/[\w-]+)+$/;
+        const accessPathRegex = /^(\/[\w-]+)+$/
         if (!accessPathRegex.test(value)) {
-          return "Access path must be a valid path";
+          return 'Access path must be a valid path'
         }
 
-        return undefined;
-      },
-    },
-  });
+        return undefined
+      }
+    }
+  })
 
   const fetchUserData = useCallback(async () => {
     api.userStorage
@@ -83,108 +83,108 @@ export const Dashboard = () => {
       .then(({ storage }) => {
         setUserStorage({
           ...storage,
-          total: storage.used + storage.available,
-        });
+          total: storage.used + storage.available
+        })
       })
-      .catch((error) => {
-        console.error(error);
-      });
+      .catch(error => {
+        console.error(error)
+      })
 
     api.userWebsites
       .query()
       .then(({ websites }) => {
-        setWebsites(websites);
+        setWebsites(websites)
       })
-      .catch((error) => {
-        console.error(error);
-      });
+      .catch(error => {
+        console.error(error)
+      })
 
     api.userSshKey
       .query()
       .then(({ sshKey }) => {
-        setSshKey(sshKey);
+        setSshKey(sshKey)
       })
-      .catch((error) => {
-        console.error(error);
-      });
+      .catch(error => {
+        console.error(error)
+      })
 
     api.userBackups
       .query()
       .then(({ backups }) => {
-        setBackups(backups.map(({ timestamp }) => timestamp));
+        setBackups(backups.map(({ timestamp }) => timestamp))
       })
-      .catch((error) => {
-        console.error(error);
-      });
-  }, []);
+      .catch(error => {
+        console.error(error)
+      })
+  }, [])
 
   useEffect(() => {
-    void fetchUserData();
-  }, []);
+    void fetchUserData()
+  }, [])
 
   const restoreBackup = useCallback(
     async (timestamp: number) => {
       try {
-        setBackupBeingRestored(timestamp);
-        await api.restoreBackup.mutate({ timestamp });
-        await fetchUserData();
-        setBackupBeingRestored(null);
+        setBackupBeingRestored(timestamp)
+        await api.restoreBackup.mutate({ timestamp })
+        await fetchUserData()
+        setBackupBeingRestored(null)
         toast({
-          variant: "default",
-          title: "Backup restored",
-          description: "Your backup has been restored successfully",
-        });
+          variant: 'default',
+          title: 'Backup restored',
+          description: 'Your backup has been restored successfully'
+        })
       } catch (error) {
-        setBackupBeingRestored(null);
+        setBackupBeingRestored(null)
         toast({
-          variant: "destructive",
-          title: "Error",
-          description: "An error occured while restoring your backup",
-        });
+          variant: 'destructive',
+          title: 'Error',
+          description: 'An error occured while restoring your backup'
+        })
       }
     },
     [setBackupBeingRestored]
-  );
+  )
 
   const addWebsite = useCallback(
     async (event: React.FormEvent) => {
-      event.preventDefault();
+      event.preventDefault()
 
       const { domain, accessPath } = {
         domain: newWebsiteDomain.current,
-        accessPath: newWebsiteAccessPath.current,
-      };
+        accessPath: newWebsiteAccessPath.current
+      }
       if (domain !== undefined && accessPath !== undefined) {
-        setIsAddingWebsite(true);
+        setIsAddingWebsite(true)
 
-        await api.addWebsite.mutate({ domain, accessPath });
-        setWebsites([...websites, { domain, accessPath }]);
+        await api.addWebsite.mutate({ domain, accessPath })
+        setWebsites([...websites, { domain, accessPath }])
 
-        setIsAddingWebsite(false);
-        newWebsiteDomain.current = "";
-        newWebsiteAccessPath.current = "";
+        setIsAddingWebsite(false)
+        newWebsiteDomain.current = ''
+        newWebsiteAccessPath.current = ''
       }
 
-      (event.target as HTMLFormElement).reset();
-      (
+      ; (event.target as HTMLFormElement).reset()
+      ; (
         (event.target as HTMLFormElement).elements[0] as HTMLInputElement
-      ).focus();
+      ).focus()
       for (const element of (event.target as HTMLFormElement).elements) {
         if (element instanceof HTMLInputElement) {
-          element.value = "";
+          element.value = ''
         }
       }
     },
     [websites]
-  );
+  )
 
   const logout = () => {
-    localStorage.removeItem("name");
-    localStorage.removeItem("password");
-    localStorage.removeItem("token");
+    localStorage.removeItem('name')
+    localStorage.removeItem('password')
+    localStorage.removeItem('token')
 
-    navigate("/login");
-  };
+    navigate('/login')
+  }
 
   return (
     <div className="bg-slate-100 dark:bg-gray-900 w-full min-h-screen">
@@ -210,13 +210,13 @@ export const Dashboard = () => {
                 <div className="password flex gap-3">
                   <Input
                     readOnly
-                    type={showPassword ? "text" : "password"}
-                    defaultValue={localStorage.getItem("password") ?? ""}
+                    type={showPassword ? 'text' : 'password'}
+                    defaultValue={localStorage.getItem('password') ?? ''}
                   />
                   <Toggle
                     variant="outline"
                     onClick={() => {
-                      setShowPassword(!showPassword);
+                      setShowPassword(!showPassword)
                     }}
                   >
                     {showPassword ? <Eye /> : <EyeOff />}
@@ -232,9 +232,8 @@ export const Dashboard = () => {
                 <Input
                   readOnly
                   type="domain"
-                  defaultValue={`${
-                    localStorage.getItem("name")?.trim() ?? ""
-                  }@${location.hostname}`}
+                  defaultValue={`${localStorage.getItem('name')?.trim() ?? ''
+                    }@${location.hostname}`}
                 />
                 <Textarea readOnly value={sshKey} className="resize-none" />
               </div>
@@ -248,7 +247,7 @@ export const Dashboard = () => {
                   value={(userStorage.used / userStorage.total) * 100}
                 />
               )}
-              <div className="grid grid-cols-2 mt-4">
+              <div className="grid grid-cols-2 mt-4 gap-4">
                 <div>
                   <h4 className="text-gray-500 dark:text-gray-400 mb mt-2">
                     Storage used
@@ -256,7 +255,7 @@ export const Dashboard = () => {
                   <p className="text-gray-500 text-base">
                     <span className="text-xl text-black">
                       {prettyBytes(userStorage.used * 1e3)}
-                    </span>{" "}
+                    </span>{' '}
                     / {prettyBytes(userStorage.total * 1e3)}
                   </p>
                 </div>
@@ -287,14 +286,14 @@ export const Dashboard = () => {
                           {humanizeDuration(
                             Date.now() - backupTimestamp * 1000,
                             { largest: 1, round: true }
-                          )}{" "}
+                          )}{' '}
                           ago
                         </p>
                         <Button
                           variant="destructiveOutline"
                           isLoading={backupBeingRestored === backupTimestamp}
                           onClick={async () => {
-                            await restoreBackup(backupTimestamp);
+                            await restoreBackup(backupTimestamp)
                           }}
                         >
                           Restore
@@ -321,30 +320,30 @@ export const Dashboard = () => {
                       type="text"
                       placeholder="Domain"
                       value={website.domain}
-                      onChange={(event) => {
-                        const newWebsites = [...websites];
+                      onChange={event => {
+                        const newWebsites = [...websites]
                         newWebsites[index] = {
                           ...newWebsites[index],
-                          domain: event.target.value,
-                        };
-                        setWebsites(newWebsites);
+                          domain: event.target.value
+                        }
+                        setWebsites(newWebsites)
                       }}
                     />
                     <Input
                       type="text"
                       placeholder="Path"
                       value={website.accessPath}
-                      onChange={(event) => {
-                        const newWebsites = [...websites];
+                      onChange={event => {
+                        const newWebsites = [...websites]
                         newWebsites[index] = {
                           ...newWebsites[index],
-                          accessPath: event.target.value,
-                        };
-                        setWebsites(newWebsites);
+                          accessPath: event.target.value
+                        }
+                        setWebsites(newWebsites)
                       }}
                     />
                   </li>
-                );
+                )
               })}
               <li>
                 <form
@@ -357,28 +356,28 @@ export const Dashboard = () => {
                       type="text"
                       placeholder="Domain"
                       defaultValue={newWebsiteDomain.current}
-                      onChange={(e) => {
-                        newWebsiteDomain.current = e.target.value;
+                      onChange={e => {
+                        newWebsiteDomain.current = e.target.value
                       }}
-                      validator={(value) => {
+                      validator={value => {
                         const error =
-                          newWebsiteValidators.domain.validator(value);
-                        updateNewWebsiteErrors();
-                        return error;
+                          newWebsiteValidators.domain.validator(value)
+                        updateNewWebsiteErrors()
+                        return error
                       }}
                     />
                     <Input
                       type="text"
                       placeholder="Path"
                       defaultValue={newWebsiteAccessPath.current}
-                      onChange={(e) => {
-                        newWebsiteAccessPath.current = e.target.value;
+                      onChange={e => {
+                        newWebsiteAccessPath.current = e.target.value
                       }}
-                      validator={(value) => {
+                      validator={value => {
                         const error =
-                          newWebsiteValidators.accessPath.validator(value);
-                        updateNewWebsiteErrors();
-                        return error;
+                          newWebsiteValidators.accessPath.validator(value)
+                        updateNewWebsiteErrors()
+                        return error
                       }}
                     />
                   </div>
@@ -401,5 +400,5 @@ export const Dashboard = () => {
         </div>
       </div>
     </div>
-  );
-};
+  )
+}

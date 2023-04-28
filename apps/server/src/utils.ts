@@ -1,6 +1,6 @@
 import { spawnSync } from 'child_process'
-import * as path from 'path'
 import jwt from 'jsonwebtoken'
+import * as path from 'path'
 import { z } from 'zod'
 
 const { JWT_SECRET } = process.env

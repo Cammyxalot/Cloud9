@@ -1,10 +1,10 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Signup from "./pages/signup";
-import Login from "./pages/login";
-import { Toaster } from "./components/ui/toaster";
-import FallbackRoute from "./components/logic/fallback-route";
-import { Dashboard } from "./pages/dashboard";
-import Admin from "./pages/admin";
+import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import FallbackRoute from './components/logic/fallback-route'
+import { Toaster } from './components/ui/toaster'
+import Admin from './pages/admin'
+import { Dashboard } from './pages/dashboard'
+import Login from './pages/login'
+import Signup from './pages/signup'
 
 const App = () => {
   return (
@@ -45,7 +45,7 @@ const App = () => {
       </Routes>
       <Toaster />
     </BrowserRouter>
-  );
-};
+  )
+}
 
-export default App;
+export default App
