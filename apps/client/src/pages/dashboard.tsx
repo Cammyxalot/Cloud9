@@ -72,7 +72,11 @@ export const Dashboard = () => {
     }
   }, [newPassword, oldPassword])
 
-  const { errors: newWebsiteErrors, updateErrors: updateNewWebsiteErrors, validators: newWebsiteValidators } = useErrors({
+  const {
+    errors: newWebsiteErrors,
+    updateErrors: updateNewWebsiteErrors,
+    validators: newWebsiteValidators
+  } = useErrors({
     domain: {
       ref: newWebsiteDomain,
       validator: (value: string) => {
@@ -80,7 +84,8 @@ export const Dashboard = () => {
           return 'Domain is required'
         }
 
-        const domainRegex = /^(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}$/
+        const domainRegex =
+          /^(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}$/
         if (!domainRegex.test(value)) {
           return 'Domain must be a valid domain name'
         }
@@ -124,28 +129,53 @@ export const Dashboard = () => {
   })
 
   const fetchUserData = useCallback(async () => {
-    api.userStorage.query().then(({ storage }) => {
-      setUserStorage({
-        ...storage,
-        total: storage.used + storage.available
+    api.userStorage
+      .query()
+      .then(({ storage }) => {
+        setUserStorage({
+          ...storage,
+          total: storage.used + storage.available
+        })
       })
-    }).catch((error) => { console.error(error) })
+      .catch(error => {
+        console.error(error)
+      })
 
-    api.userWebsites.query().then(({ websites }) => {
-      setWebsites(websites)
-    }).catch((error) => { console.error(error) })
+    api.userWebsites
+      .query()
+      .then(({ websites }) => {
+        setWebsites(websites)
+      })
+      .catch(error => {
+        console.error(error)
+      })
 
-    api.userSshKey.query().then(({ sshKey }) => {
-      setSshKey(sshKey)
-    }).catch((error) => { console.error(error) })
+    api.userSshKey
+      .query()
+      .then(({ sshKey }) => {
+        setSshKey(sshKey)
+      })
+      .catch(error => {
+        console.error(error)
+      })
 
-    api.userBackups.query().then(({ backups }) => {
-      setBackups(backups.map(({ timestamp }) => timestamp))
-    }).catch((error) => { console.error(error) })
+    api.userBackups
+      .query()
+      .then(({ backups }) => {
+        setBackups(backups.map(({ timestamp }) => timestamp))
+      })
+      .catch(error => {
+        console.error(error)
+      })
 
-    api.userDatabases.query().then(({ databases }) => {
-      setDatabases(databases)
-    }).catch((error) => { console.error(error) })
+    api.userDatabases
+      .query()
+      .then(({ databases }) => {
+        setDatabases(databases)
+      })
+      .catch((error) => {
+        console.error(error)
+      })
   }, [])
 
   useEffect(() => {
@@ -202,29 +232,33 @@ export const Dashboard = () => {
     }
   }, [setBackupBeingDownloaded])
 
-  const addWebsite = useCallback(async (event: React.FormEvent) => {
-    event.preventDefault()
+  const addWebsite = useCallback(
+    async (event: React.FormEvent) => {
+      event.preventDefault()
 
-    const { domain, accessPath } = { domain: newWebsiteDomain.current, accessPath: newWebsiteAccessPath.current }
-    if (domain !== undefined && accessPath !== undefined) {
-      setIsAddingWebsite(true)
-
-      await api.addWebsite.mutate({ domain, accessPath })
-      setWebsites([...websites, { domain, accessPath }])
-
-      setIsAddingWebsite(false)
-      newWebsiteDomain.current = ''
-      newWebsiteAccessPath.current = ''
-    }
-
-    (event.target as HTMLFormElement).reset();
-    ((event.target as HTMLFormElement).elements[0] as HTMLInputElement).focus()
-    for (const element of (event.target as HTMLFormElement).elements) {
-      if (element instanceof HTMLInputElement) {
-        element.value = ''
+      const { domain, accessPath } = {
+        domain: newWebsiteDomain.current,
+        accessPath: newWebsiteAccessPath.current
       }
-    }
-  }, [websites])
+      if (domain !== undefined && accessPath !== undefined) {
+        setIsAddingWebsite(true)
+
+        await api.addWebsite.mutate({ domain, accessPath })
+        setWebsites([...websites, { domain, accessPath }])
+
+        setIsAddingWebsite(false)
+        newWebsiteDomain.current = ''
+        newWebsiteAccessPath.current = ''
+      }
+
+      (event.target as HTMLFormElement).reset();
+      ((event.target as HTMLFormElement).elements[0] as HTMLInputElement).focus()
+      for (const element of (event.target as HTMLFormElement).elements) {
+        if (element instanceof HTMLInputElement) {
+          element.value = ''
+        }
+      }
+    }, [websites])
 
   const password = localStorage.getItem('password')
 
@@ -298,14 +332,19 @@ export const Dashboard = () => {
                 <Toggle variant="outline" onClick={() => { setShowPassword(!showPassword) }}>{showPassword ? <Eye /> : <EyeOff />}</Toggle>
               </div>
             </div>
-          </div>
-          <div className='bg-white/100 border-solid border-[1px] border-slate-200 px-6 py-5 rounded-xl'>
-            <h2 className="mb-4 text-lg font-semibold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">
-              SSH
-            </h2>
-            <div className='flex flex-col gap-3'>
-              <Input readOnly type="domain" defaultValue={`${localStorage.getItem('name')?.trim() ?? ''}@${location.hostname}`} />
-              <Textarea readOnly value={sshKey} className='resize-none' />
+            <div className="bg-white/100 border-solid border-[1px] border-slate-200 px-6 py-5 rounded-xl">
+              <h2 className="mb-4 text-lg font-semibold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">
+                SSH
+              </h2>
+              <div className="flex flex-col gap-3">
+                <Input
+                  readOnly
+                  type="domain"
+                  defaultValue={`${localStorage.getItem('name')?.trim() ?? ''
+                    }@${location.hostname}`}
+                />
+                <Textarea readOnly value={sshKey} className="resize-none" />
+              </div>
             </div>
           </div>
           <div className='bg-white/100 border-solid border-[1px] border-slate-200 px-6 py-5 rounded-xl'>
