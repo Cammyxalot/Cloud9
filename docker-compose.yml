@@ -15,6 +15,15 @@ services:
       - db:/var/lib/mysql
     networks:
       - server
+  redis:
+    image: redis/redis-stack:latest
+    restart: always
+    ports:
+      - $REDIS_LOCAL_PORT:$REDIS_DOCKER_PORT
+    environment:
+      - REDIS_ARGS=--requirepass $REDIS_PASSWORD
+    networks:
+      - server
   app:
     build:
       context: .
@@ -47,9 +56,11 @@ services:
       - server
     depends_on:
       - db
+      - redis
 
 volumes:
   db:
+  redis:
 
 networks:
   server:

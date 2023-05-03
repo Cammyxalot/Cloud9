@@ -1,31 +1,100 @@
-import { useCallback, useEffect, useState } from 'react'
+// import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { api } from '../api'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '../components/ui/button'
-import { Progress } from '../components/ui/progress'
-import prettyBytes from 'pretty-bytes'
+// import { Progress } from '../components/ui/progress'
+// import prettyBytes from 'pretty-bytes'
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+} from 'chart.js'
+import { Line } from 'react-chartjs-2'
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+)
+ChartJS.defaults.font.family = 'Inter, sans-serif'
+
+interface StatSeries {
+  label: string
+  data: Array<{
+    date: Date
+    value: number
+  }>
+}
+
+const transformStatsToSeries = (stats: { stats: Record<string, Record<number, number>> }): StatSeries[] => {
+  return Object.entries(stats.stats).map(([key, data]) => ({
+    label: key,
+    data: Object.entries(data).map(([date, value]) => ({
+      date: new Date(Number(date)),
+      value
+    }))
+  }))
+}
 
 const Admin = () => {
-  const [stats, setStats] = useState<Record<string, any>>({})
+  // const [stats, setStats] = useState<Record<string, any>>({})
+  const [statSeries, setStatSeries] = useState<StatSeries[]>([])
+  const hoverLine = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    console.log(statSeries)
+  }, [statSeries])
 
   const navigate = useNavigate()
 
-  const fetchUserStats = useCallback(async () => {
-    const { stats } = await api.userStats.query()
+  // const fetchUserStats = useCallback(async () => {
+  //   const { stats } = await api.systemMetrics.query()
 
-    setStats(stats)
-  }, [])
+  //   setStats(stats)
+  // }, [])
 
   useEffect(() => {
-    void fetchUserStats()
+    api.realtimeSystemMetrics.subscribe(undefined, {
+      onError (error) {
+        console.error(error)
+      },
+      onData (data) {
+        console.log(data)
+        setStatSeries((prev) => {
+          const series = transformStatsToSeries(data)
+          let newPrev = prev
+          series.forEach((s) => {
+            const existing = prev.find((p) => p.label === s.label)
+            if (existing !== undefined) {
+              existing.data = [...existing.data, ...s.data]
+            } else {
+              newPrev = [...newPrev, s]
+            }
+          })
+          return newPrev
+        })
+      }
+    })
 
-    const interval = setInterval(() => {
-      void fetchUserStats()
-    }, 2000)
+    // void fetchUserStats()
 
-    return () => {
-      clearInterval(interval)
-    }
+    // const interval = setInterval(() => {
+    //   void fetchUserStats()
+    // }, 2000)
+
+    // return () => {
+    //   clearInterval(interval)
+    // }
   }, [])
 
   return (
@@ -45,7 +114,95 @@ const Admin = () => {
             </Button>
           </header>
           <aside className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 lg:grid-rows-2 gap-8">
-            <div className="bg-white/100  border-solid border-[1px] border-slate-200 px-6 py-5 rounded-xl lg:row-span-2 col-start-1 md:col-span-2">
+            <div className="bg-white/100  border-solid border-[1px] border-slate-200 px-6 py-5 rounded-xl lg:row-span-2 col-start-1 col-span-3">
+              <h2 className="mb-4 text-lg font-semibold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">
+                System Metrics
+              </h2>
+              <div className="group relative w-full h-full">
+                <div ref={hoverLine} className="absolute w-px h-full bg-gray-400 pointer-events-none translate-y-0 hidden group-hover:block" />
+                <Line
+                  options={{
+                    interaction: {
+                      mode: 'index' as const,
+                      intersect: false
+                    },
+                    responsive: true,
+                    plugins: {
+                      legend: {
+                        position: 'top' as const
+                      },
+                      title: {
+                        display: false,
+                        text: 'System Metrics'
+                      },
+                      tooltip: {
+                        intersect: false,
+                        callbacks: {
+                          label: (context) => {
+                            if (hoverLine.current !== null) {
+                              hoverLine.current.style.left = `${context.element.x}px`
+                              hoverLine.current.style.height = `${context.chart.chartArea.height}px`
+                              hoverLine.current.style.setProperty('--tw-translate-y', `${context.chart.chartArea.top}px`)
+                            }
+                          }
+                        }
+                      }
+                    },
+                    scales: {
+                      x: {
+                        display: true,
+                        title: {
+                          display: true,
+                          text: 'Hour',
+                          font: {
+                            size: 16,
+                            weight: '600'
+                          }
+                        }
+                      },
+                      y: {
+                        display: true,
+                        title: {
+                          display: true,
+                          text: 'Usage (%)',
+                          font: {
+                            size: 16,
+                            weight: '600'
+                          }
+                        },
+                        min: 0,
+                        max: 100
+                      }
+                    }
+                  }}
+                  data={{
+                    labels: [
+                      ...new Set(statSeries
+                        .flatMap(({ data }) =>
+                          data.map(({ date }) => date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }))
+                        ))
+                    ],
+                    datasets: statSeries.map(({ data, label }) => {
+                      // calculate color from label
+                      const hash = label.split('').reduce((acc, char) => {
+                        acc = char.charCodeAt(0) + ((acc << 5) - acc)
+                        return acc & acc
+                      }, 0)
+                      const color = `hsl(${hash % 360}, 100%, 50%)`
+
+                      return {
+                        label,
+                        data: data.map(({ value }) => value),
+                        backgroundColor: color,
+                        borderColor: color,
+                        tension: 0.4
+                      }
+                    })
+                  }}
+                />
+              </div>
+            </div>
+            {/* <div className="bg-white/100  border-solid border-[1px] border-slate-200 px-6 py-5 rounded-xl lg:row-span-2 col-start-1 md:col-span-2">
               <h2 className="mb-4 text-lg font-semibold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">
                 CPU Usage
               </h2>
@@ -130,7 +287,7 @@ const Admin = () => {
                   </p>
                 </div>
               </div>
-            </div>
+            </div> */}
           </aside>
         </div>
       </div>
